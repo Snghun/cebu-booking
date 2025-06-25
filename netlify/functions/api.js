@@ -1,0 +1,1391 @@
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+// CORS 설정
+const corsHandler = cors({
+  origin: true,
+  credentials: true,
+});
+
+// MongoDB 연결
+const connectDB = async () => {
+  try {
+    // 이미 연결되어 있는지 확인
+    if (mongoose.connection.readyState === 1) {
+      console.log('MongoDB 이미 연결됨');
+      console.log('현재 데이터베이스:', mongoose.connection.db?.databaseName);
+      return;
+    }
+    
+    console.log('MongoDB 연결 시도...');
+    
+    const mongoUri = process.env.MONGODB_URI;
+    console.log('연결 URI:', mongoUri);
+    
+    await mongoose.connect(mongoUri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    });
+    console.log('MongoDB 연결 성공');
+    console.log('연결 상태:', mongoose.connection.readyState);
+    console.log('데이터베이스 이름:', mongoose.connection.db?.databaseName);
+    
+    // 컬렉션 목록 확인
+    try {
+      const collections = await mongoose.connection.db.listCollections().toArray();
+      console.log('사용 가능한 컬렉션:', collections.map(c => c.name));
+    } catch (collectionError) {
+      console.log('컬렉션 목록 조회 실패:', collectionError.message);
+    }
+    
+  } catch (err) {
+    console.error('MongoDB 연결 실패:', err);
+    throw err;
+  }
+};
+
+// 서버리스 환경에서는 연결을 한 번만 수행
+let isConnected = false;
+const ensureConnection = async () => {
+  try {
+    console.log('=== MongoDB 연결 보장 시작 ===');
+    console.log('현재 연결 상태:', mongoose.connection.readyState);
+    console.log('isConnected 플래그:', isConnected);
+    
+    if (!isConnected || mongoose.connection.readyState !== 1) {
+      console.log('MongoDB 연결 재확인...');
+      await connectDB();
+      isConnected = true;
+      console.log('MongoDB 연결 완료');
+    } else {
+      console.log('MongoDB 이미 연결됨');
+    }
+    
+    console.log('최종 MongoDB 연결 상태:', mongoose.connection.readyState);
+    console.log('데이터베이스 이름:', mongoose.connection.db?.databaseName);
+    console.log('=== MongoDB 연결 보장 완료 ===');
+  } catch (error) {
+    console.error('=== MongoDB 연결 보장 실패 ===');
+    console.error('오류 메시지:', error.message);
+    console.error('오류 스택:', error.stack);
+    console.error('=== MongoDB 연결 보장 실패 끝 ===');
+    throw error;
+  }
+};
+
+// 모델이 이미 존재하는지 확인하고 조건부로 생성
+const getOrCreateModel = (modelName, schema) => {
+  try {
+    return mongoose.model(modelName);
+  } catch (error) {
+    return mongoose.model(modelName, schema);
+  }
+};
+
+// User 모델
+const userSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    minlength: 3
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 6
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+const User = getOrCreateModel('User', userSchema);
+
+// Booking 모델
+const bookingSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  room: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Room',
+    required: true
+  },
+  // 예약 정보
+  checkIn: {
+    type: Date,
+    required: true
+  },
+  checkOut: {
+    type: Date,
+    required: true
+  },
+  guests: {
+    type: Number,
+    required: true,
+    min: 1
+  },
+  // 예약자 정보
+  guestName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  guestEmail: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  guestPhone: {
+    type: String,
+    trim: true
+  },
+  specialRequests: {
+    type: String,
+    trim: true
+  },
+  // 예약 상태
+  status: {
+    type: String,
+    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
+    default: 'pending'
+  },
+  totalPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+bookingSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+const Booking = getOrCreateModel('Booking', bookingSchema);
+
+// Room 모델
+const roomSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  description: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  detailedDescription: {
+    type: String,
+    trim: true
+  },
+  price: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  image: {
+    type: String,
+    required: true
+  },
+  images: [{
+    type: String
+  }],
+  size: {
+    type: String,
+    required: true
+  },
+  capacity: {
+    type: Number,
+    required: true,
+    min: 1
+  },
+  amenities: [{
+    type: String,
+    trim: true
+  }],
+  features: [{
+    type: String,
+    trim: true
+  }],
+  roomType: {
+    type: String,
+    enum: ['standard', 'deluxe', 'suite', 'villa'],
+    default: 'standard'
+  },
+  view: {
+    type: String,
+    enum: ['garden', 'ocean', 'mountain', 'city'],
+    default: 'garden'
+  },
+  isAvailable: {
+    type: Boolean,
+    default: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const Room = getOrCreateModel('Room', roomSchema);
+
+// Gallery 모델
+const gallerySchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  imageUrl: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    trim: true
+  },
+  category: {
+    type: String,
+    enum: ['resort', 'room', 'facility', 'view'],
+    default: 'resort'
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  order: {
+    type: Number,
+    default: 0
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const Gallery = getOrCreateModel('Gallery', gallerySchema);
+
+// Netlify Function 핸들러
+exports.handler = async (event, context) => {
+  // CORS 헤더 설정
+  const headers = {
+    'Access-Control-Allow-Origin': 'http://localhost:3000',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
+    'Content-Type': 'application/json',
+  };
+
+  // OPTIONS 요청 처리 (CORS preflight)
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ message: 'CORS preflight OK' }),
+    };
+  }
+
+  // 환경 변수 로깅 (디버깅용)
+  console.log('환경 변수 확인:');
+  console.log('MONGODB_URI:', process.env.MONGODB_URI ? '설정됨' : '설정되지 않음');
+  console.log('JWT_SECRET:', process.env.JWT_SECRET ? '설정됨' : '설정되지 않음');
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+
+  try {
+    const { httpMethod, path, body, headers: requestHeaders } = event;
+    const pathSegments = path.replace('/.netlify/functions/api', '').split('/').filter(Boolean);
+    
+    console.log('=== API 요청 시작 ===');
+    console.log('요청 정보:', { httpMethod, path, pathSegments });
+    console.log('요청 헤더:', requestHeaders);
+    console.log('요청 본문:', body);
+    console.log('=== API 요청 정보 끝 ===');
+    
+    // API 라우팅
+    if (pathSegments[0] === 'users') {
+      return await handleUsers(httpMethod, pathSegments, body, headers, event);
+    } else if (pathSegments[0] === 'bookings') {
+      return await handleBookings(httpMethod, pathSegments, body, headers, event);
+    } else if (pathSegments[0] === 'rooms') {
+      return await handleRooms(httpMethod, pathSegments, body, headers);
+    } else if (pathSegments[0] === 'gallery') {
+      return await handleGallery(httpMethod, pathSegments, body, headers);
+    } else if (pathSegments[0] === 'admin') {
+      return await handleAdmin(httpMethod, pathSegments, body, headers, event);
+    } else if (path === '/.netlify/functions/api') {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ message: 'Cebu Resort Booking API가 실행 중입니다.' }),
+      };
+    } else {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ message: 'API 엔드포인트를 찾을 수 없습니다.' }),
+      };
+    }
+  } catch (error) {
+    console.error('=== API 오류 발생 ===');
+    console.error('오류 메시지:', error.message);
+    console.error('오류 스택:', error.stack);
+    console.error('요청 정보:', { 
+      httpMethod: event.httpMethod, 
+      path: event.path,
+      body: event.body 
+    });
+    console.error('=== API 오류 끝 ===');
+    
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        message: '서버 내부 오류가 발생했습니다.',
+        error: error.message 
+      }),
+    };
+  }
+};
+
+// 관리자 권한 확인 함수
+const verifyAdmin = async (token) => {
+  try {
+    console.log('=== 관리자 권한 확인 시작 ===');
+    console.log('토큰 존재 여부:', !!token);
+    console.log('토큰 길이:', token ? token.length : 0);
+    console.log('토큰 시작 부분:', token ? token.substring(0, 20) + '...' : '없음');
+    
+    if (!token) {
+      throw new Error('토큰이 없습니다.');
+    }
+    
+    console.log('JWT_SECRET 존재 여부:', !!process.env.JWT_SECRET);
+    console.log('JWT_SECRET 길이:', process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 0);
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    console.log('JWT 토큰 검증 성공:', decoded);
+    console.log('디코딩된 사용자 ID:', decoded.userId);
+    
+    const user = await User.findById(decoded.userId);
+    console.log('사용자 조회 결과:', user ? '성공' : '실패');
+    console.log('사용자 정보:', user ? {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      isAdmin: user.isAdmin
+    } : '없음');
+    
+    if (!user) {
+      throw new Error('사용자를 찾을 수 없습니다.');
+    }
+    
+    console.log('사용자 관리자 권한:', user.isAdmin);
+    if (!user.isAdmin) {
+      throw new Error('관리자 권한이 필요합니다.');
+    }
+    
+    console.log('=== 관리자 권한 확인 완료 ===');
+    return user;
+  } catch (error) {
+    console.error('=== 관리자 권한 확인 실패 ===');
+    console.error('오류 타입:', error.constructor.name);
+    console.error('오류 메시지:', error.message);
+    console.error('오류 스택:', error.stack);
+    console.error('=== 관리자 권한 확인 실패 끝 ===');
+    throw new Error('관리자 인증 실패: ' + error.message);
+  }
+};
+
+// 사용자 관련 핸들러
+async function handleUsers(httpMethod, pathSegments, body, headers, event) {
+  // 안전한 JSON 파싱
+  let parsedBody = {};
+  try {
+    if (body && typeof body === 'string' && body.trim() !== '') {
+      parsedBody = JSON.parse(body);
+    }
+  } catch (parseError) {
+    console.error('JSON 파싱 오류:', parseError);
+    console.error('요청 본문:', body);
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({ message: '잘못된 요청 형식입니다.' })
+    };
+  }
+  
+  // MongoDB 연결 보장
+  try {
+    await ensureConnection();
+  } catch (connectionError) {
+    console.error('MongoDB 연결 실패:', connectionError);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ message: '데이터베이스 연결에 실패했습니다.' })
+    };
+  }
+  
+  if (httpMethod === 'GET' && pathSegments.length === 1) {
+    // GET /api/users
+    const users = await User.find().select('-password');
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify(users),
+    };
+  } else if (httpMethod === 'POST' && pathSegments[1] === 'register') {
+    // POST /api/users/register
+    const { username, email, password } = parsedBody;
+    
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: '이미 존재하는 사용자입니다.' }),
+      };
+    }
+    
+    const user = new User({ username, email, password });
+    await user.save();
+    
+    return {
+      statusCode: 201,
+      headers,
+      body: JSON.stringify({ message: '회원가입이 완료되었습니다.' }),
+    };
+  } else if (httpMethod === 'POST' && pathSegments[1] === 'login') {
+    // POST /api/users/login
+    console.log('=== 로그인 요청 시작 ===');
+    console.log('요청 본문:', parsedBody);
+    console.log('요청 본문 타입:', typeof parsedBody);
+    console.log('parsedBody.email 타입:', typeof parsedBody.email);
+    console.log('parsedBody.password 타입:', typeof parsedBody.password);
+    
+    const { email, password } = parsedBody;
+    
+    // 데이터 타입 검증
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      console.log('이메일 또는 비밀번호가 문자열이 아님');
+      console.log('email 타입:', typeof email, '값:', email);
+      console.log('password 타입:', typeof password, '값:', password);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: '이메일과 비밀번호는 문자열이어야 합니다.' }),
+      };
+    }
+    
+    if (!email || !password) {
+      console.log('이메일 또는 비밀번호 누락');
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: '이메일과 비밀번호를 입력해주세요.' }),
+      };
+    }
+    
+    console.log('사용자 조회 시작, 이메일:', email);
+    const user = await User.findOne({ email: email.toString() });
+    if (!user) {
+      console.log('사용자를 찾을 수 없음');
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: '사용자를 찾을 수 없습니다.' }),
+      };
+    }
+    
+    console.log('사용자 찾음:', user.username, '관리자 권한:', user.isAdmin);
+    
+    console.log('비밀번호 검증 시작');
+    const isMatch = await user.comparePassword(password.toString());
+    if (!isMatch) {
+      console.log('비밀번호 불일치');
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: '비밀번호가 일치하지 않습니다.' }),
+      };
+    }
+    
+    console.log('비밀번호 검증 성공');
+    
+    console.log('JWT 토큰 생성 시작');
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'your-secret-key', {
+      expiresIn: '1h'
+    });
+    
+    console.log('JWT 토큰 생성 완료');
+    
+    const responseData = { 
+      message: '로그인 성공', 
+      user: { 
+        id: user._id, 
+        username: user.username, 
+        email: user.email,
+        isAdmin: user.isAdmin 
+      },
+      token
+    };
+    
+    console.log('로그인 응답 데이터:', responseData);
+    console.log('=== 로그인 요청 완료 ===');
+    
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify(responseData),
+    };
+  }
+  
+  return {
+    statusCode: 404,
+    headers,
+    body: JSON.stringify({ message: '사용자 API 엔드포인트를 찾을 수 없습니다.' }),
+  };
+}
+
+// 예약 관련 핸들러
+async function handleBookings(httpMethod, pathSegments, body, headers, event) {
+  // 안전한 JSON 파싱
+  let parsedBody = {};
+  try {
+    if (body && typeof body === 'string' && body.trim() !== '') {
+      parsedBody = JSON.parse(body);
+    }
+  } catch (parseError) {
+    console.error('JSON 파싱 오류:', parseError);
+    console.error('요청 본문:', body);
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({ message: '잘못된 요청 형식입니다.' })
+    };
+  }
+  
+  if (httpMethod === 'GET' && pathSegments.length === 1) {
+    // GET /api/bookings - 사용자의 예약 목록 조회
+    const token = event.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ message: '로그인이 필요합니다.' })
+      };
+    }
+    
+    try {
+      // MongoDB 연결 보장
+      await ensureConnection();
+      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      const bookings = await Booking.find({ user: decoded.userId })
+        .populate('room', 'name price image')
+        .sort({ createdAt: -1 });
+      
+      console.log('조회된 예약 수:', bookings.length);
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(bookings)
+      };
+    } catch (error) {
+      console.error('예약 조회 오류:', error);
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ message: '유효하지 않은 토큰입니다.' })
+      };
+    }
+  } else if (httpMethod === 'GET' && pathSegments.length === 2) {
+    // GET /api/bookings/:id - 개별 예약 조회
+    const bookingId = pathSegments[1];
+    const token = event.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ message: '로그인이 필요합니다.' })
+      };
+    }
+    
+    try {
+      await ensureConnection();
+      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      
+      // 예약 조회 및 소유권 확인
+      const booking = await Booking.findOne({ _id: bookingId, user: decoded.userId })
+        .populate('room', 'name price image description size capacity amenities');
+      
+      if (!booking) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '예약을 찾을 수 없습니다.' })
+        };
+      }
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(booking)
+      };
+    } catch (error) {
+      console.error('개별 예약 조회 오류:', error);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: error.message })
+      };
+    }
+  } else if (httpMethod === 'POST' && pathSegments.length === 1) {
+    // POST /api/bookings - 예약 생성
+    const token = event.headers.authorization?.replace('Bearer ', '');
+    console.log('=== 예약 생성 시작 ===');
+    console.log('예약 생성 요청 - 토큰:', token ? '존재함' : '없음');
+    console.log('요청 본문:', parsedBody);
+    console.log('요청 헤더:', event.headers);
+    
+    if (!token) {
+      console.log('토큰이 없음');
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ message: '로그인이 필요합니다.' })
+      };
+    }
+    
+    try {
+      // MongoDB 연결 보장
+      console.log('MongoDB 연결 시도...');
+      await ensureConnection();
+      console.log('MongoDB 연결 상태:', mongoose.connection.readyState);
+      console.log('MongoDB 데이터베이스:', mongoose.connection.db?.databaseName);
+      
+      console.log('JWT 토큰 검증 시작');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      console.log('JWT 토큰 검증 성공:', decoded);
+      
+      const {
+        roomId,
+        checkIn,
+        checkOut,
+        guests,
+        guestName,
+        guestEmail,
+        guestPhone,
+        specialRequests
+      } = parsedBody;
+      
+      console.log('파싱된 예약 데이터:', {
+        roomId,
+        checkIn,
+        checkOut,
+        guests,
+        guestName,
+        guestEmail,
+        guestPhone,
+        specialRequests
+      });
+      
+      // 필수 필드 검증
+      if (!roomId || !checkIn || !checkOut || !guests || !guestName || !guestEmail) {
+        console.log('필수 필드 누락:', { roomId, checkIn, checkOut, guests, guestName, guestEmail });
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ message: '필수 정보가 누락되었습니다.' })
+        };
+      }
+      
+      // 객실 정보 조회
+      console.log('객실 정보 조회 시작, roomId:', roomId);
+      const room = await Room.findById(roomId);
+      if (!room) {
+        console.log('객실을 찾을 수 없음:', roomId);
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '객실을 찾을 수 없습니다.' })
+        };
+      }
+      
+      console.log('객실 정보 조회 성공:', room.name, '가격:', room.price);
+      
+      // 체크인/체크아웃 날짜 검증
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      console.log('날짜 검증:', {
+        checkInDate,
+        checkOutDate,
+        today,
+        isCheckInBeforeToday: checkInDate < today,
+        isCheckOutBeforeCheckIn: checkOutDate <= checkInDate
+      });
+      
+      if (checkInDate < today) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ message: '체크인 날짜는 오늘 이후여야 합니다.' })
+        };
+      }
+      
+      if (checkOutDate <= checkInDate) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ message: '체크아웃 날짜는 체크인 날짜 이후여야 합니다.' })
+        };
+      }
+      
+      // 숙박 일수 계산
+      const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+      const totalPrice = room.price * nights;
+      
+      console.log('가격 계산:', { nights, roomPrice: room.price, totalPrice });
+      
+      const booking = new Booking({
+        user: decoded.userId,
+        room: roomId,
+        checkIn: checkInDate,
+        checkOut: checkOutDate,
+        guests,
+        guestName,
+        guestEmail,
+        guestPhone,
+        specialRequests,
+        totalPrice
+      });
+      
+      console.log('생성할 예약 객체:', JSON.stringify(booking, null, 2));
+      console.log('MongoDB 연결 상태 (저장 전):', mongoose.connection.readyState);
+      
+      try {
+        console.log('예약 저장 시작...');
+        const savedBooking = await booking.save();
+        console.log('예약 저장 완료! ID:', savedBooking._id);
+        console.log('저장된 예약:', JSON.stringify(savedBooking, null, 2));
+        
+        // 저장 후 실제로 DB에서 조회해서 확인
+        console.log('DB에서 예약 재조회 시작...');
+        const retrievedBooking = await Booking.findById(savedBooking._id);
+        console.log('DB에서 조회한 예약:', retrievedBooking ? '성공' : '실패');
+        if (retrievedBooking) {
+          console.log('조회된 예약 상세:', JSON.stringify(retrievedBooking, null, 2));
+        }
+        
+        // 추가 검증: 전체 예약 수 확인
+        const totalBookings = await Booking.countDocuments();
+        console.log('데이터베이스의 총 예약 수:', totalBookings);
+        
+        // 사용자의 예약 수 확인
+        const userBookings = await Booking.countDocuments({ user: decoded.userId });
+        console.log('현재 사용자의 예약 수:', userBookings);
+        
+        // 최근 예약 5개 조회
+        const recentBookings = await Booking.find().sort({ createdAt: -1 }).limit(5);
+        console.log('최근 예약 5개:', recentBookings.map(b => ({ id: b._id, guestName: b.guestName, createdAt: b.createdAt })));
+        
+      } catch (saveError) {
+        console.error('예약 저장 실패:', saveError);
+        console.error('저장 오류 상세:', {
+          name: saveError.name,
+          message: saveError.message,
+          code: saveError.code,
+          stack: saveError.stack
+        });
+        throw saveError;
+      }
+      
+      let populatedBooking;
+      try {
+        console.log('Populate 시작...');
+        populatedBooking = await booking.populate('room', 'name price image');
+        console.log('Populate 완료:', populatedBooking.room ? '성공' : '실패');
+      } catch (populateError) {
+        console.error('Populate 실패:', populateError);
+        populatedBooking = booking; // Populate 실패해도 예약은 성공
+      }
+      
+      console.log('=== 예약 생성 완료 ===');
+      
+      return {
+        statusCode: 201,
+        headers,
+        body: JSON.stringify({ 
+          message: '예약이 성공적으로 생성되었습니다.',
+          booking: populatedBooking
+        })
+      };
+    } catch (error) {
+      console.error('예약 생성 전체 오류:', error);
+      console.error('오류 스택:', error.stack);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: error.message })
+      };
+    }
+  } else if (httpMethod === 'PUT' && pathSegments.length === 2) {
+    // PUT /api/bookings/:id - 예약 수정
+    const bookingId = pathSegments[1];
+    const token = event.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ message: '로그인이 필요합니다.' })
+      };
+    }
+    
+    try {
+      await ensureConnection();
+      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      
+      // 예약 조회 및 소유권 확인
+      const booking = await Booking.findOne({ _id: bookingId, user: decoded.userId });
+      if (!booking) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '예약을 찾을 수 없습니다.' })
+        };
+      }
+      
+      const {
+        checkIn,
+        checkOut,
+        guests,
+        guestName,
+        guestEmail,
+        guestPhone,
+        specialRequests
+      } = parsedBody;
+      
+      // 필수 필드 검증
+      if (!checkIn || !checkOut || !guests || !guestName || !guestEmail) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ message: '필수 정보가 누락되었습니다.' })
+        };
+      }
+      
+      // 날짜 검증
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (checkInDate < today) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ message: '체크인 날짜는 오늘 이후여야 합니다.' })
+        };
+      }
+      
+      if (checkOutDate <= checkInDate) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ message: '체크아웃 날짜는 체크인 날짜 이후여야 합니다.' })
+        };
+      }
+      
+      // 객실 정보 조회하여 가격 재계산
+      const room = await Room.findById(booking.room);
+      if (!room) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '객실 정보를 찾을 수 없습니다.' })
+        };
+      }
+      
+      // 숙박 일수 계산 및 가격 재계산
+      const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+      const totalPrice = room.price * nights;
+      
+      // 예약 정보 업데이트
+      booking.checkIn = checkInDate;
+      booking.checkOut = checkOutDate;
+      booking.guests = guests;
+      booking.guestName = guestName;
+      booking.guestEmail = guestEmail;
+      booking.guestPhone = guestPhone || '';
+      booking.specialRequests = specialRequests || '';
+      booking.totalPrice = totalPrice;
+      booking.updatedAt = Date.now();
+      
+      const updatedBooking = await booking.save();
+      const populatedBooking = await updatedBooking.populate('room', 'name price image');
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(populatedBooking)
+      };
+    } catch (error) {
+      console.error('예약 수정 오류:', error);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: error.message })
+      };
+    }
+  } else if (httpMethod === 'DELETE' && pathSegments.length === 2) {
+    // DELETE /api/bookings/:id - 예약 삭제
+    const bookingId = pathSegments[1];
+    const token = event.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ message: '로그인이 필요합니다.' })
+      };
+    }
+    
+    try {
+      await ensureConnection();
+      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      
+      // 예약 조회 및 소유권 확인
+      const booking = await Booking.findOne({ _id: bookingId, user: decoded.userId });
+      if (!booking) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '예약을 찾을 수 없습니다.' })
+        };
+      }
+      
+      // 예약 삭제
+      await Booking.findByIdAndDelete(bookingId);
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ message: '예약이 성공적으로 취소되었습니다.' })
+      };
+    } catch (error) {
+      console.error('예약 삭제 오류:', error);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: error.message })
+      };
+    }
+  }
+  
+  return {
+    statusCode: 404,
+    headers,
+    body: JSON.stringify({ message: '예약 API 엔드포인트를 찾을 수 없습니다.' }),
+  };
+}
+
+// 객실 목록 조회
+async function handleRooms(httpMethod, pathSegments, body, headers) {
+  if (httpMethod === 'GET' && pathSegments.length === 1) {
+    // GET /api/rooms - 객실 목록 조회
+    await ensureConnection();
+    
+    try {
+      const rooms = await Room.find({ isAvailable: true }).sort({ createdAt: -1 });
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(rooms)
+      };
+    } catch (error) {
+      console.error('객실 데이터 조회 오류:', error);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ message: error.message })
+      };
+    }
+  } else if (httpMethod === 'GET' && pathSegments.length === 2) {
+    // GET /api/rooms/:id - 개별 객실 조회
+    const roomId = pathSegments[1];
+    
+    try {
+      await ensureConnection();
+      
+      const room = await Room.findById(roomId);
+      
+      if (!room) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '객실을 찾을 수 없습니다.' })
+        };
+      }
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(room)
+      };
+    } catch (error) {
+      console.error('개별 객실 조회 오류:', error);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ message: error.message })
+      };
+    }
+  }
+  
+  return {
+    statusCode: 404,
+    headers,
+    body: JSON.stringify({ message: '객실 API 엔드포인트를 찾을 수 없습니다.' }),
+  };
+}
+
+// Gallery 관련 핸들러
+async function handleGallery(httpMethod, pathSegments, body, headers) {
+  if (httpMethod === 'GET') {
+    await ensureConnection();
+    
+    try {
+      const gallery = await Gallery.find({ isActive: true }).sort({ order: 1, createdAt: -1 });
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(gallery)
+      };
+    } catch (error) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ message: error.message })
+      };
+    }
+  }
+  
+  return {
+    statusCode: 404,
+    headers,
+    body: JSON.stringify({ message: '갤러리 API 엔드포인트를 찾을 수 없습니다.' }),
+  };
+}
+
+// 관리자 관련 핸들러
+async function handleAdmin(httpMethod, pathSegments, body, headers, event) {
+  console.log('=== 관리자 API 요청 시작 ===');
+  console.log('요청 정보:', { httpMethod, pathSegments });
+  console.log('요청 헤더:', event.headers);
+  
+  const parsedBody = body ? JSON.parse(body) : {};
+  const authHeader = event.headers.authorization || event.headers.Authorization;
+  const token = authHeader ? authHeader.replace('Bearer ', '') : null;
+  
+  console.log('Authorization 헤더:', authHeader);
+  console.log('토큰 존재 여부:', !!token);
+  console.log('토큰 길이:', token ? token.length : 0);
+  
+  // MongoDB 연결 보장
+  try {
+    console.log('MongoDB 연결 보장 시작');
+    await ensureConnection();
+    console.log('MongoDB 연결 보장 완료');
+  } catch (connectionError) {
+    console.error('MongoDB 연결 실패:', connectionError);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ message: '데이터베이스 연결에 실패했습니다.' })
+    };
+  }
+  
+  try {
+    // 관리자 권한 확인
+    console.log('관리자 권한 확인 시작');
+    const adminUser = await verifyAdmin(token);
+    console.log('관리자 권한 확인 성공:', adminUser.username);
+    console.log('@@@ pathSegments:', pathSegments);
+
+    
+    if (httpMethod === 'GET' && pathSegments[1] === 'dashboard') {
+      // GET /api/admin/dashboard - 대시보드 통계
+      console.log('대시보드 데이터 조회 시작');
+      const totalBookings = await Booking.countDocuments();
+      console.log('총 예약 수:', totalBookings);
+      const totalUsers = await User.countDocuments({ isAdmin: false });
+      console.log('총 사용자 수:', totalUsers);
+      const totalRooms = await Room.countDocuments();
+      console.log('총 객실 수:', totalRooms);
+      
+      const recentBookings = await Booking.find()
+        .populate('room', 'name')
+        .populate('user', 'username email')
+        .sort({ createdAt: -1 })
+        .limit(5);
+      console.log('최근 예약 수:', recentBookings.length);
+      
+      const monthlyRevenue = await Booking.aggregate([
+        {
+          $match: {
+            createdAt: {
+              $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$totalPrice' }
+          }
+        }
+      ]);
+      
+      console.log('대시보드 데이터 조회 완료');
+      const responseData = {
+        totalBookings,
+        totalUsers,
+        totalRooms,
+        monthlyRevenue: monthlyRevenue[0]?.total || 0,
+        recentBookings
+      };
+      console.log('응답 데이터:', responseData);
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(responseData)
+      };
+    } else if (httpMethod === 'GET' && pathSegments[1] === 'bookings') {
+      // GET /api/admin/bookings - 예약 목록
+      const bookings = await Booking.find()
+        .populate('room', 'name')
+        .populate('user', 'username email')
+        .sort({ createdAt: -1 });
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(bookings)
+      };
+    } else if (httpMethod === 'GET' && pathSegments[1] === 'bookings' && pathSegments[2]) {
+      // GET /api/admin/bookings/:id - 예약 상세
+      const booking = await Booking.findById(pathSegments[2])
+        .populate('room', 'name description image')
+        .populate('user', 'username email');
+      
+      if (!booking) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '예약을 찾을 수 없습니다.' })
+        };
+      }
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(booking)
+      };
+    } else if (httpMethod === 'PUT' && pathSegments[1] === 'bookings' && pathSegments[2]) {
+      // PUT /api/admin/bookings/:id - 예약 수정
+      const booking = await Booking.findByIdAndUpdate(
+        pathSegments[2],
+        parsedBody,
+        { new: true }
+      ).populate('room', 'name').populate('user', 'username email');
+      
+      if (!booking) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '예약을 찾을 수 없습니다.' })
+        };
+      }
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(booking)
+      };
+    } else if (httpMethod === 'DELETE' && pathSegments[1] === 'bookings' && pathSegments[2]) {
+      // DELETE /api/admin/bookings/:id - 예약 삭제
+      const booking = await Booking.findByIdAndDelete(pathSegments[2]);
+      
+      if (!booking) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '예약을 찾을 수 없습니다.' })
+        };
+      }
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ message: '예약이 삭제되었습니다.' })
+      };
+    } else if (httpMethod === 'GET' && pathSegments[0] === 'admin'&& pathSegments[1] === 'users' && !pathSegments[2]) {
+      // GET /api/admin/users - 고객 목록
+      const users = await User.find({ isAdmin: false })
+        .select('-password')
+        .sort({ createdAt: -1 });
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(users)
+      };
+    } else if (httpMethod === 'GET' && pathSegments[0] === 'admin' && pathSegments[1] === 'users' && pathSegments[2]) {
+      const user = await User.findById(pathSegments[2]).select('-password');
+      if (!user) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '사용자를 찾을 수 없습니다.' })
+        };
+      }
+      // 해당 사용자의 예약 내역도 함께 조회
+      const userBookings = await Booking.find({ user: pathSegments[2] })
+        .populate('room', 'name')
+        .sort({ createdAt: -1 });
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ user, bookings: userBookings })
+      };
+    } else if (httpMethod === 'POST' && pathSegments[1] === 'rooms') {
+      // POST /api/admin/rooms - 객실 추가
+      const room = new Room(parsedBody);
+      await room.save();
+      
+      return {
+        statusCode: 201,
+        headers,
+        body: JSON.stringify(room)
+      };
+    } else if (httpMethod === 'PUT' && pathSegments[1] === 'rooms' && pathSegments[2]) {
+      // PUT /api/admin/rooms/:id - 객실 수정
+      const room = await Room.findByIdAndUpdate(
+        pathSegments[2],
+        parsedBody,
+        { new: true }
+      );
+      
+      if (!room) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '객실을 찾을 수 없습니다.' })
+        };
+      }
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(room)
+      };
+    } else if (httpMethod === 'DELETE' && pathSegments[1] === 'rooms' && pathSegments[2]) {
+      // DELETE /api/admin/rooms/:id - 객실 삭제
+      const room = await Room.findByIdAndDelete(pathSegments[2]);
+      
+      if (!room) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '객실을 찾을 수 없습니다.' })
+        };
+      }
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ message: '객실이 삭제되었습니다.' })
+      };
+    } else if (httpMethod === 'GET' && pathSegments[1] === 'rooms' && !pathSegments[2]) {
+      // GET /api/admin/rooms - 관리자 객실 전체 조회
+      const rooms = await Room.find({}).sort({ createdAt: -1 });
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(rooms)
+      };
+    }
+    
+    return {
+      statusCode: 404,
+      headers,
+      body: JSON.stringify({ message: '관리자 API 엔드포인트를 찾을 수 없습니다.' })
+    };
+    
+  } catch (error) {
+    console.error('관리자 API 오류:', error);
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ message: error.message })
+    };
+  }
+} 

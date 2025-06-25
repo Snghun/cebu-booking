@@ -1,0 +1,29 @@
+{
+  "name": "cebu-resort-booking-api",
+  "version": "1.0.0",
+  "description": "Cebu Resort Booking API with Netlify Functions",
+  "main": "api.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "cross-env MONGODB_URI=mongodb://localhost:27017/booking-app netlify dev",
+    "start": "cross-env MONGODB_URI=mongodb://localhost:27017/booking-app node api.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^7.5.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  },
+  "keywords": [
+    "netlify",
+    "functions",
+    "api",
+    "booking",
+    "resort"
+  ],
+  "author": "",
+  "license": "MIT"
+}

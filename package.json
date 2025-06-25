@@ -1,20 +1,26 @@
 {
-  "name": "booking-app",
+  "name": "cebu-resort-booking",
   "version": "1.0.0",
-  "description": "React, Node.js, MongoDB를 이용한 예약 시스템",
+  "description": "React, Netlify Functions, MongoDB를 이용한 리조트 예약 시스템",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "cd server && npm run dev",
+    "dev": "cd client && npm start",
     "client": "cd client && npm start",
-    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
-    "build": "cd client && npm run build"
+    "server": "netlify dev",
+    "install-all": "npm install && cd client && npm install && cd ../netlify/functions && npm install",
+    "build": "cd client && npm run build",
+    "install-functions": "cd netlify/functions && npm install",
+    "deploy": "netlify deploy --prod",
+    "deploy-client": "cd client && npm run deploy"
   },
   "keywords": [
     "react",
-    "nodejs",
+    "netlify",
+    "functions",
     "mongodb",
-    "booking"
+    "booking",
+    "resort",
+    "serverless"
   ],
   "author": "",
   "license": "ISC",

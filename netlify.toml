@@ -1,0 +1,25 @@
+[build]
+  # React 앱 빌드 명령어
+  command = "cd client && npm run build"
+  
+  # 빌드 결과물 디렉토리
+  publish = "client/build"
+  
+  # Functions 디렉토리
+  functions = "netlify/functions"
+
+[build.environment]
+  # Node.js 버전
+  NODE_VERSION = "18"
+
+# 리다이렉트 설정 (SPA 라우팅 지원)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# API 리다이렉트 설정
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200 
