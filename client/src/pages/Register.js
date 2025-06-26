@@ -70,7 +70,7 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      const response = await userAPI.register({
+      await userAPI.register({
         username: formData.username.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password
@@ -264,8 +264,8 @@ const Register = () => {
         <div className="text-center">
           <p className="text-xs text-gray-500">
             회원가입 시{' '}
-            <a href="#" className="text-blue-600 hover:underline">이용약관</a>과{' '}
-            <a href="#" className="text-blue-600 hover:underline">개인정보처리방침</a>에 동의하는 것으로 간주됩니다.
+            <button type="button" className="text-blue-600 hover:underline">이용약관</button>과{' '}
+            <button type="button" className="text-blue-600 hover:underline">개인정보처리방침</button>에 동의하는 것으로 간주됩니다.
           </p>
         </div>
       </div>

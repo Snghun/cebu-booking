@@ -186,12 +186,12 @@ const Login = () => {
 
           {/* 비밀번호 찾기 링크 */}
           <div className="mt-4 text-center">
-            <Link 
-              to="/forgot-password" 
+            <button 
+              type="button"
               className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
               비밀번호를 잊으셨나요?
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -199,8 +199,8 @@ const Login = () => {
         <div className="text-center">
           <p className="text-xs text-gray-500">
             로그인 시{' '}
-            <a href="#" className="text-blue-600 hover:underline">이용약관</a>과{' '}
-            <a href="#" className="text-blue-600 hover:underline">개인정보처리방침</a>에 동의하는 것으로 간주됩니다.
+            <button type="button" className="text-blue-600 hover:underline">이용약관</button>과{' '}
+            <button type="button" className="text-blue-600 hover:underline">개인정보처리방침</button>에 동의하는 것으로 간주됩니다.
           </p>
         </div>
       </div>

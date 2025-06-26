@@ -33,6 +33,7 @@ const RoomDetail = () => {
   }, [id]);
 
   // 이미지 자동 슬라이드
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (room?.images && room.images.length > 1) {
       const timer = setInterval(() => {
@@ -40,7 +41,7 @@ const RoomDetail = () => {
       }, 5000);
       return () => clearInterval(timer);
     }
-  }, [room]);
+  }, []);
 
   const fetchRoom = async () => {
     try {
