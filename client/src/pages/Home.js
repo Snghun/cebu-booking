@@ -293,6 +293,8 @@ const CebuResortBooking = () => {
     }
   }, []);
 
+  const [currentImage, setCurrentImage] = useState(null);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-cyan-50 to-white">
       {/* Header */}
