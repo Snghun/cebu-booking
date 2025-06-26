@@ -28,9 +28,12 @@ const RoomDetail = () => {
     guests: 2
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    fetchRoom();
-  }, [id]);
+    if (id) {
+      fetchRoom();
+    }
+  }, []);
 
   // 이미지 자동 슬라이드
   // eslint-disable-next-line react-hooks/exhaustive-deps

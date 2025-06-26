@@ -286,6 +286,13 @@ const CebuResortBooking = () => {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (heroImages.length > 0) {
+      setCurrentImage(heroImages[0]);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-cyan-50 to-white">
       {/* Header */}
