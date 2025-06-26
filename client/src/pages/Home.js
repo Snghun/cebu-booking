@@ -117,7 +117,7 @@ const CebuResortBooking = () => {
       setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [heroImages.length]);
 
   // 부드러운 스크롤 함수
   const scrollToSection = (sectionId) => {

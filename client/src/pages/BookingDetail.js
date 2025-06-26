@@ -48,7 +48,7 @@ const BookingDetail = () => {
       return;
     }
     fetchBooking();
-  }, []);
+  }, [fetchBooking, isAuthenticated, navigate]);
 
   const fetchBooking = async () => {
     try {

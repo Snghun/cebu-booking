@@ -33,7 +33,7 @@ const RoomDetail = () => {
     if (id) {
       fetchRoom();
     }
-  }, []);
+  }, [fetchRoom, id]);
 
   // 이미지 자동 슬라이드
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -45,6 +45,12 @@ const RoomDetail = () => {
       return () => clearInterval(timer);
     }
   }, []);
+
+  useEffect(() => {
+    if (room && room.images && room.images.length > 0) {
+      setCurrentImageIndex(0);
+    }
+  }, [room.images]);
 
   const fetchRoom = async () => {
     try {
