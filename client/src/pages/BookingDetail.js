@@ -74,7 +74,7 @@ const BookingDetail = () => {
       return;
     }
     fetchBooking();
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, id]);
 
   const handleEdit = () => {
     setIsEditing(true);

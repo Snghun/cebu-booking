@@ -61,7 +61,7 @@ const RoomDetail = () => {
     if (room && room.images && room.images.length > 0) {
       setCurrentImageIndex(0);
     }
-  }, [room.images]);
+  }, [room, room.images]);
 
   const handleImageChange = (index) => {
     setCurrentImageIndex(index);
