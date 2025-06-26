@@ -49,19 +49,19 @@ const RoomDetail = () => {
 
   // 이미지 자동 슬라이드
   useEffect(() => {
-    if (room?.images && room.images.length > 1) {
+    if (room && room.images && room.images.length > 1) {
       const timer = setInterval(() => {
         setCurrentImageIndex((prev) => (prev + 1) % room.images.length);
       }, 5000);
       return () => clearInterval(timer);
     }
-  }, []);
+  }, [room]);
 
   useEffect(() => {
     if (room && room.images && room.images.length > 0) {
       setCurrentImageIndex(0);
     }
-  }, [room.images]);
+  }, [room]);
 
   const handleImageChange = (index) => {
     setCurrentImageIndex(index);
