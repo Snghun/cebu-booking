@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/cebu-booking/static/css/main.b7523682.css",
+    "main.js": "/cebu-booking/static/js/main.a8daed51.js",
+    "static/js/453.a3c1d153.chunk.js": "/cebu-booking/static/js/453.a3c1d153.chunk.js",
+    "index.html": "/cebu-booking/index.html",
+    "main.b7523682.css.map": "/cebu-booking/static/css/main.b7523682.css.map",
+    "main.a8daed51.js.map": "/cebu-booking/static/js/main.a8daed51.js.map",
+    "453.a3c1d153.chunk.js.map": "/cebu-booking/static/js/453.a3c1d153.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.b7523682.css",
+    "static/js/main.a8daed51.js"
+  ]
+}
