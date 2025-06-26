@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 // Netlify Functions API 기본 URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8888/.netlify/functions/api';
+const API_BASE_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:8888/.netlify/functions/api"
+    : "/.netlify/functions/api";
 
 // axios 인스턴스 생성
 const api = axios.create({
