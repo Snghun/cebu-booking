@@ -28,15 +28,26 @@ const RoomDetail = () => {
     guests: 2
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    async function fetchRoom() {
+      try {
+        setLoading(true);
+        setError('');
+        const roomData = await getRoom(id);
+        setRoom(roomData);
+      } catch (error) {
+        console.error('객실 조회 오류:', error);
+        setError('객실 정보를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    }
     if (id) {
       fetchRoom();
     }
-  }, [fetchRoom, id]);
+  }, [id]);
 
   // 이미지 자동 슬라이드
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (room?.images && room.images.length > 1) {
       const timer = setInterval(() => {
@@ -51,20 +62,6 @@ const RoomDetail = () => {
       setCurrentImageIndex(0);
     }
   }, [room.images]);
-
-  const fetchRoom = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const roomData = await getRoom(id);
-      setRoom(roomData);
-    } catch (error) {
-      console.error('객실 조회 오류:', error);
-      setError('객실 정보를 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleImageChange = (index) => {
     setCurrentImageIndex(index);

@@ -41,42 +41,40 @@ const BookingDetail = () => {
     specialRequests: ''
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    async function fetchBooking() {
+      try {
+        setLoading(true);
+        const foundBooking = await getBooking(id);
+        
+        if (!foundBooking) {
+          setError('예약을 찾을 수 없습니다.');
+          return;
+        }
+        
+        setBooking(foundBooking);
+        setEditData({
+          checkIn: foundBooking.checkIn.split('T')[0],
+          checkOut: foundBooking.checkOut.split('T')[0],
+          guests: foundBooking.guests,
+          guestName: foundBooking.guestName,
+          guestEmail: foundBooking.guestEmail,
+          guestPhone: foundBooking.guestPhone || '',
+          specialRequests: foundBooking.specialRequests || ''
+        });
+      } catch (error) {
+        console.error('예약 조회 오류:', error);
+        setError('예약 정보를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    }
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     fetchBooking();
-  }, [fetchBooking, isAuthenticated, navigate]);
-
-  const fetchBooking = async () => {
-    try {
-      setLoading(true);
-      const foundBooking = await getBooking(id);
-      
-      if (!foundBooking) {
-        setError('예약을 찾을 수 없습니다.');
-        return;
-      }
-      
-      setBooking(foundBooking);
-      setEditData({
-        checkIn: foundBooking.checkIn.split('T')[0],
-        checkOut: foundBooking.checkOut.split('T')[0],
-        guests: foundBooking.guests,
-        guestName: foundBooking.guestName,
-        guestEmail: foundBooking.guestEmail,
-        guestPhone: foundBooking.guestPhone || '',
-        specialRequests: foundBooking.specialRequests || ''
-      });
-    } catch (error) {
-      console.error('예약 조회 오류:', error);
-      setError('예약 정보를 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isAuthenticated, navigate]);
 
   const handleEdit = () => {
     setIsEditing(true);
