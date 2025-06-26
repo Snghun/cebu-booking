@@ -39,6 +39,7 @@ const CebuResortBooking = () => {
   ];
 
   // 객실 데이터 가져오기
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const fetchRooms = async () => {
       try {
@@ -59,6 +60,7 @@ const CebuResortBooking = () => {
   }, []);
 
   // 갤러리 데이터 가져오기
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const fetchGallery = async () => {
       try {
