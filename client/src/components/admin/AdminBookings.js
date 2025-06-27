@@ -5,7 +5,7 @@ import {
   Search,
   X
 } from 'lucide-react';
-import { getAdminBookings, deleteAdminBooking } from '../../services/api';
+import { getAdminBookings, deleteAdminBooking, updateAdminBooking } from '../../services/api';
 
 const AdminBookings = () => {
   const [bookings, setBookings] = useState([]);
@@ -52,6 +52,18 @@ const AdminBookings = () => {
   const handleViewDetail = (booking) => {
     setSelectedBooking(booking);
     setShowDetailModal(true);
+  };
+
+  const handleChangeStatus = async (status) => {
+    if (!selectedBooking) return;
+    try {
+      await updateAdminBooking(selectedBooking._id, { status });
+      alert(`예약 상태가 '${status === 'confirmed' ? '완료' : '대기'}'로 변경되었습니다.`);
+      setShowDetailModal(false);
+      fetchBookings();
+    } catch (error) {
+      alert('예약 상태 변경에 실패했습니다.');
+    }
   };
 
   const filteredBookings = bookings.filter(booking => {
@@ -333,7 +345,23 @@ const AdminBookings = () => {
                 )}
               </div>
 
-              <div className="flex justify-end space-x-3 mt-6">
+              <div className="flex flex-col md:flex-row justify-end md:space-x-3 mt-6 space-y-2 md:space-y-0">
+                {selectedBooking.status === 'pending' && (
+                  <button
+                    onClick={() => handleChangeStatus('confirmed')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    예약완료로 변경
+                  </button>
+                )}
+                {selectedBooking.status === 'confirmed' && (
+                  <button
+                    onClick={() => handleChangeStatus('pending')}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    대기로 변경
+                  </button>
+                )}
                 <button
                   onClick={() => setShowDetailModal(false)}
                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"

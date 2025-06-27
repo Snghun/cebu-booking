@@ -525,16 +525,18 @@ const BookingDetail = () => {
           </div>
 
           {/* 예약 취소 버튼 */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-colors flex items-center space-x-2 disabled:opacity-50"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>{deleting ? '취소 중...' : '예약 취소'}</span>
-            </button>
-          </div>
+          {booking.status === 'pending' && (
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-colors flex items-center space-x-2 disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{deleting ? '취소 중...' : '예약 취소'}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

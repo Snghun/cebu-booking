@@ -206,6 +206,11 @@ const CebuResortBooking = () => {
       return;
     }
     
+    if (!guestInfo.guestPhone || guestInfo.guestPhone.trim() === '') {
+      alert('예약자 전화번호를 입력해주세요.');
+      return;
+    }
+    
     try {
       setBookingLoading(true);
       
@@ -295,7 +300,7 @@ const CebuResortBooking = () => {
             <div className="flex items-center space-x-2">
               <Waves className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
               <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
-                Cebu Paradise Resort
+                Cebu Paradise
               </h1>
             </div>
             <nav className="flex items-center space-x-4 md:space-x-6">
@@ -492,6 +497,11 @@ const CebuResortBooking = () => {
           {/* 예약 폼 */}
           <div className="bg-gradient-to-r from-emerald-50 via-cyan-50 to-teal-50 rounded-2xl p-8 mb-12">
             {/* 선택된 객실 정보 표시 */}
+            {!selectedRoom && (
+              <div className="mb-6 p-4 bg-white rounded-xl shadow-sm border-l-4 border-gray-300 text-gray-600 text-center">
+                아래 객실을 선택 해 주세요.
+              </div>
+            )}
             {selectedRoom && (
               <div className="mb-6 p-4 bg-white rounded-xl shadow-sm border-l-4 border-blue-500">
                 <div className="flex items-center justify-between">
@@ -854,13 +864,14 @@ const CebuResortBooking = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      전화번호
+                      전화번호 *
                     </label>
                     <input
                       type="tel"
                       value={guestInfo.guestPhone}
                       onChange={(e) => setGuestInfo({...guestInfo, guestPhone: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
                     />
                   </div>
                   
