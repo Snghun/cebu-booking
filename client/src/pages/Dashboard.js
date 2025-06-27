@@ -102,7 +102,7 @@ const Dashboard = () => {
               <div className="flex items-center space-x-2">
                 <Waves className="w-6 h-6 text-blue-600" />
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
-                  Cebu Paradise Resort
+                  Cebu Paradise
                 </h1>
               </div>
             </div>
@@ -221,19 +221,19 @@ const Dashboard = () => {
                 <Link 
                   key={booking._id} 
                   to={`/booking/${booking._id}`}
-                  className="block border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow hover:border-blue-300"
+                  className="block border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow hover:border-blue-300"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-4 mb-2">
-                        <h4 className="text-lg font-semibold text-gray-900">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mb-2">
+                        <h4 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                           {booking.room?.name || '객실 정보 없음'}
                         </h4>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-500 whitespace-nowrap">
                           {booking.guests}명
                         </span>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-gray-600 mb-2">
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-4 h-4" />
                           <span>체크인: {formatDate(booking.checkIn)}</span>
@@ -257,7 +257,7 @@ const Dashboard = () => {
                         </p>
                       )}
                     </div>
-                    <div className="ml-4">
+                    <div className="mt-3 sm:mt-0 sm:ml-4 flex-shrink-0 flex justify-end">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
                         {getStatusText(booking.status)}
                       </span>

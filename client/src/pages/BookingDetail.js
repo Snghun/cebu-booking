@@ -253,7 +253,7 @@ const BookingDetail = () => {
               <div className="flex items-center space-x-2">
                 <Waves className="w-6 h-6 text-blue-600" />
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
-                  Cebu Paradise Resort
+                  Cebu Paradise
                 </h1>
               </div>
             </div>
