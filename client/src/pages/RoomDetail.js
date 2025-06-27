@@ -208,25 +208,27 @@ const RoomDetail = () => {
           {/* 객실 정보 */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{room.name}</h1>
-                  <p className="text-gray-600 text-lg mb-4">{room.description}</p>
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <span>{room.size}</span>
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-1" />
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 break-keep">{room.name}</h1>
+                  <p className="text-gray-600 text-base sm:text-lg mb-4 break-words line-clamp-2">{room.description}</p>
+                  <div className="flex flex-nowrap items-center gap-x-3 gap-y-1 text-sm text-gray-500 overflow-x-auto min-w-0">
+                    <span className="whitespace-nowrap min-w-0 overflow-hidden text-ellipsis">{room.size}</span>
+                    <span className="hidden sm:inline">|</span>
+                    <div className="flex items-center whitespace-nowrap min-w-0 overflow-hidden text-ellipsis">
+                      <Users className="w-4 h-4 mr-1 flex-shrink-0" />
                       <span>최대 {room.capacity}명</span>
                     </div>
-                    <div className="flex items-center">
+                    <span className="hidden sm:inline">|</span>
+                    <div className="flex items-center flex-shrink-0">
                       {[...Array(5)].map((_, i) => (
                         <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
                       ))}
                     </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-blue-600">₩{room.price.toLocaleString()}</p>
+                <div className="text-left sm:text-right min-w-[120px]">
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-600">₩{room.price.toLocaleString()}</p>
                   <p className="text-sm text-gray-500">1박 기준</p>
                 </div>
               </div>
