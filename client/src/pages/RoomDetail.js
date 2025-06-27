@@ -14,6 +14,7 @@ import {
   Home
 } from 'lucide-react';
 import { getRoom } from '../services/api';
+import { useSwipeable } from 'react-swipeable';
 
 const RoomDetail = () => {
   const { id } = useParams();
@@ -98,6 +99,12 @@ const RoomDetail = () => {
     return room ? room.price * nights : 0;
   };
 
+  const handlers = useSwipeable({
+    onSwipedLeft: () => handleImageChange((currentImageIndex + 1) % room.images.length),
+    onSwipedRight: () => handleImageChange((currentImageIndex - 1 + room.images.length) % room.images.length),
+    trackMouse: true,
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center">
@@ -163,7 +170,7 @@ const RoomDetail = () => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* 객실 이미지 갤러리 */}
         <div className="mb-8">
-          <div className="relative h-96 md:h-[500px] rounded-2xl overflow-hidden">
+          <div className="relative h-96 md:h-[500px] rounded-2xl overflow-hidden" {...handlers}>
             {room.images && room.images.length > 0 ? (
               <>
                 {room.images.map((image, index) => (
