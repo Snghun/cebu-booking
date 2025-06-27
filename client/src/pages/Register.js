@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff, ArrowLeft, Waves, Home } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Waves, Home } from 'lucide-react';
 import { userAPI } from '../services/api';
 
 const Register = () => {

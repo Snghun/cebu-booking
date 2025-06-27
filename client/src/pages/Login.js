@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Waves, LogIn, Eye, EyeOff, Home } from 'lucide-react';
+import { Waves, LogIn, Eye, EyeOff, Home } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {

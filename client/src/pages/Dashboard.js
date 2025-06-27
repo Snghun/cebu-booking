@@ -7,7 +7,6 @@ import {
   CheckCircle, 
   AlertCircle, 
   Plus, 
-  ArrowLeft, 
   Waves,
   LogOut,
   Home

@@ -7,7 +7,6 @@ import {
   Home, 
   LogOut,
   ChevronRight,
-  ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AdminDashboard from '../components/admin/AdminDashboard';
