@@ -9,7 +9,8 @@ import {
   Plus, 
   ArrowLeft, 
   Waves,
-  LogOut
+  LogOut,
+  Home
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getUserBookings } from '../services/api';
@@ -96,9 +97,8 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link to="/" className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors">
-                <ArrowLeft className="w-5 h-5" />
-                <span>홈으로</span>
+              <Link to="/" className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors" title="홈으로">
+                <Home className="w-6 h-6" />
               </Link>
               <div className="flex items-center space-x-2">
                 <Waves className="w-6 h-6 text-blue-600" />

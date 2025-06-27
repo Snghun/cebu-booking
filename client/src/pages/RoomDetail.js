@@ -10,7 +10,8 @@ import {
   Phone,
   Mail,
   Clock,
-  Car
+  Car,
+  Home
 } from 'lucide-react';
 import { getRoom } from '../services/api';
 
@@ -145,7 +146,7 @@ const RoomDetail = () => {
             <div className="flex items-center space-x-4">
               <Link to="/" className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors">
                 <ArrowLeft className="w-5 h-5" />
-                <span>홈으로</span>
+                <Home className="w-6 h-6" />
               </Link>
               <div className="flex items-center space-x-2">
                 <Waves className="w-6 h-6 text-blue-600" />

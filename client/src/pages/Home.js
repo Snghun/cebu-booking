@@ -504,17 +504,17 @@ const CebuResortBooking = () => {
             )}
             {selectedRoom && (
               <div className="mb-6 p-4 bg-white rounded-xl shadow-sm border-l-4 border-blue-500">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                     <img 
                       src={selectedRoom.image} 
                       alt={selectedRoom.name}
-                      className="w-16 h-16 object-cover rounded-lg"
+                      className="w-20 h-20 object-cover rounded-lg mb-2 sm:mb-0"
                     />
-                    <div>
-                      <h4 className="font-bold text-gray-800">{selectedRoom.name}</h4>
-                      <p className="text-sm text-gray-600">{selectedRoom.description}</p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-gray-800 break-keep text-base sm:text-lg">{selectedRoom.name}</h4>
+                      <p className="text-sm text-gray-600 break-words line-clamp-2">{selectedRoom.description}</p>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 mt-1">
                         <span>{selectedRoom.size}</span>
                         <div className="flex items-center">
                           <Users className="w-4 h-4 mr-1" />
@@ -523,8 +523,8 @@ const CebuResortBooking = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-blue-600">₩{selectedRoom.price.toLocaleString()}</div>
+                  <div className="text-right min-w-[100px]">
+                    <div className="text-xl sm:text-2xl font-bold text-blue-600">₩{selectedRoom.price.toLocaleString()}</div>
                     <div className="text-sm text-gray-500">1박 기준</div>
                   </div>
                 </div>

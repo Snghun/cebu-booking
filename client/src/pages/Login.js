@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Waves, LogIn, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Waves, LogIn, Eye, EyeOff, Home } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -77,8 +77,7 @@ const Login = () => {
         {/* 헤더 */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors mb-4">
-            <ArrowLeft className="w-5 h-5" />
-            <span>홈으로 돌아가기</span>
+            <Home className="w-6 h-6" />
           </Link>
           
           <div className="flex items-center justify-center space-x-2 mb-6">

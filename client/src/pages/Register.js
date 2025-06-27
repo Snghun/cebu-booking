@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff, ArrowLeft, Waves } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, ArrowLeft, Waves, Home } from 'lucide-react';
 import { userAPI } from '../services/api';
 
 const Register = () => {
@@ -101,8 +101,7 @@ const Register = () => {
         {/* 헤더 */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors mb-4">
-            <ArrowLeft className="w-5 h-5" />
-            <span>홈으로 돌아가기</span>
+            <Home className="w-6 h-6" />
           </Link>
           
           <div className="flex items-center justify-center space-x-2 mb-6">

@@ -14,6 +14,7 @@ import AdminDashboard from '../components/admin/AdminDashboard';
 import AdminBookings from '../components/admin/AdminBookings';
 import AdminUsers from '../components/admin/AdminUsers';
 import AdminRooms from '../components/admin/AdminRooms';
+import { Link } from 'react-router-dom';
 
 const Admin = () => {
   const { user, isAdmin, logout } = useAuth();
@@ -84,13 +85,9 @@ const Admin = () => {
       <header className="bg-white shadow-sm border-b">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>홈으로</span>
-            </button>
+            <Link to="/" className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors" title="홈으로">
+              <Home className="w-6 h-6" />
+            </Link>
             <div className="h-6 w-px bg-gray-300"></div>
             <h1 className="text-xl font-bold text-gray-900">관리자 대시보드</h1>
           </div>
