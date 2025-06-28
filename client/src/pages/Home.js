@@ -488,8 +488,8 @@ const CebuResortBooking = () => {
                 </span>
               </h2>
               <p className="text-xl text-white/90 mb-8 leading-relaxed drop-shadow-lg">
-                필리핀 세부의 프리미엄 럭셔리 리조트에서 꿈같은 휴가를 경험하세요. 
-                터키석 빛 바다와 하얀 모래사장이 선사하는 완벽한 힐링을 만나보세요.
+                필리핀 세부 막탄 뉴타운에서 누리는 특별한 휴식.  
+                에메랄드빛 바다와 하얀 모래사장, 그리고 편안한 숙소에서 당신만의 완벽한 하루를 시작하세요.
               </p>
               <div className="flex items-center space-x-4 text-white/80 drop-shadow-lg">
                 <MapPin className="w-5 h-5" />
@@ -699,7 +699,7 @@ const CebuResortBooking = () => {
           <div className="text-center mb-16">
             <h3 className="text-4xl font-bold text-gray-800 mb-4">프리미엄 시설</h3>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              세부 최고의 럭셔리 시설들로 완벽한 휴가를 만들어드립니다
+              뉴타운 최고의 럭셔리 시설들로 완벽한 휴가를 만들어드립니다
             </p>
           </div>
           
@@ -720,7 +720,7 @@ const CebuResortBooking = () => {
       {/* 갤러리 섹션 */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6">
-          <h3 className="text-4xl font-bold text-center text-gray-800 mb-16">리조트 갤러리</h3>
+          <h3 className="text-4xl font-bold text-center text-gray-800 mb-16">갤러리</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {galleryLoading ? (
               // 로딩 상태
@@ -762,8 +762,7 @@ const CebuResortBooking = () => {
                 <h4 className="text-2xl font-bold">Cebu Stays</h4>
               </div>
               <p className="text-gray-400 leading-relaxed">
-                필리핀 세부에서 가장 럭셔리한 리조트 경험을 선사합니다. 
-                완벽한 휴식과 최상의 서비스를 약속드립니다.
+                막탄 뉴타운 중심에서 누리는 리조트 감성.<br/>바다와 어우러진 감각적인 스테이를 만나보세요.
               </p>
             </div>
             
@@ -788,7 +787,7 @@ const CebuResortBooking = () => {
           </div>
           
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500">
-            <p>&copy; 2025 Cebu Stays. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Cebu Stays. All rights reserved.</p>
           </div>
         </div>
       </footer>
