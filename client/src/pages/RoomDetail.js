@@ -225,7 +225,18 @@ const RoomDetail = () => {
     );
     
     if (isBooked) {
-      return 'bg-red-100 text-red-600 font-medium';
+      return 'bg-gray-300 text-gray-600 font-medium';
+    }
+    
+    // 선택된 기간 음영처리
+    if (selectedDate.checkIn && selectedDate.checkOut) {
+      const checkInDate = new Date(selectedDate.checkIn);
+      const checkOutDate = new Date(selectedDate.checkOut);
+      const currentDate = new Date(date);
+      
+      if (currentDate >= checkInDate && currentDate <= checkOutDate) {
+        return 'bg-blue-200 text-blue-800 font-medium';
+      }
     }
     
     // 예약 가능한 날짜는 회색 배경으로 표시
@@ -240,6 +251,61 @@ const RoomDetail = () => {
     return bookedDates.some(bookedDate => 
       bookedDate.toDateString() === date.toDateString()
     );
+  };
+
+  // 달력에서 날짜 클릭 처리
+  const handleDateClick = (date) => {
+    const clickedDate = date.getFullYear() + '-' + 
+                       String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(date.getDate()).padStart(2, '0');
+    
+    // 예약된 날짜인지 확인
+    const bookedDates = getBookedDates();
+    const isBooked = bookedDates.some(bookedDate => 
+      bookedDate.toDateString() === date.toDateString()
+    );
+    
+    if (isBooked) {
+      return; // 예약된 날짜는 클릭 불가
+    }
+    
+    // 체크인과 체크아웃이 모두 선택된 상태라면 초기화
+    if (selectedDate.checkIn && selectedDate.checkOut) {
+      setSelectedDate({
+        checkIn: clickedDate,
+        checkOut: '',
+        guests: selectedDate.guests
+      });
+      return;
+    }
+    
+    // 체크인이 선택되지 않은 경우
+    if (!selectedDate.checkIn) {
+      setSelectedDate({
+        ...selectedDate,
+        checkIn: clickedDate
+      });
+    }
+    // 체크인은 선택되었지만 체크아웃이 선택되지 않은 경우
+    else if (!selectedDate.checkOut) {
+      const checkInDate = new Date(selectedDate.checkIn);
+      const checkOutDate = new Date(clickedDate);
+      
+      // 체크아웃이 체크인보다 이전인 경우, 새로운 날짜를 체크인으로 설정
+      if (checkOutDate <= checkInDate) {
+        setSelectedDate({
+          ...selectedDate,
+          checkIn: clickedDate,
+          checkOut: ''
+        });
+        return;
+      }
+      
+      setSelectedDate({
+        ...selectedDate,
+        checkOut: clickedDate
+      });
+    }
   };
 
   const handlers = useSwipeable({
@@ -562,12 +628,16 @@ const RoomDetail = () => {
                     formatDay={(locale, date) => date.getDate()}
                     showNeighboringMonth={false}
                     minDate={new Date()}
+                    onClickDay={handleDateClick}
+                    locale="ko-KR"
                   />
                   <div className="mt-4 text-sm text-gray-600">
                     <div className="flex items-center space-x-2 mb-2">
-                      <div className="w-4 h-4 bg-gray-100 rounded"></div>
+                      <div className="w-4 h-4 bg-gray-300 rounded"></div>
                       <span>예약된 날짜</span>
                     </div>
+
+
                   </div>
                 </div>
               )}
