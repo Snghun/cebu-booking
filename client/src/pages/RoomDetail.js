@@ -3,7 +3,6 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Star, 
-  ArrowLeft,
   Waves,
   MapPin,
   Waves as WavesIcon,
@@ -13,8 +12,66 @@ import {
   Car,
   Home
 } from 'lucide-react';
-import { getRoom } from '../services/api';
+import { getRoom, getRoomBookings } from '../services/api';
 import { useSwipeable } from 'react-swipeable';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+
+// 달력 스타일 오버라이드
+const calendarStyles = `
+  .react-calendar {
+    width: 100%;
+    border: none;
+    font-family: inherit;
+  }
+  
+  .react-calendar__tile {
+    padding: 8px;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  
+  .react-calendar__tile:enabled:hover {
+    background-color: #e3f2fd;
+  }
+  
+  .react-calendar__tile--active {
+    background: #1976d2 !important;
+    color: white;
+  }
+  
+  .react-calendar__tile--now {
+    background: #fff3e0;
+    color: #f57c00;
+  }
+  
+  .react-calendar__navigation button {
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  
+  .react-calendar__navigation button:enabled:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .react-calendar__month-view__weekdays {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #666;
+  }
+  
+  .react-calendar__month-view__weekdays__weekday {
+    padding: 8px;
+  }
+`;
 
 const RoomDetail = () => {
   const { id } = useParams();
@@ -29,6 +86,8 @@ const RoomDetail = () => {
     checkOut: '',
     guests: 2
   });
+  const [roomBookings, setRoomBookings] = useState([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
 
   useEffect(() => {
     async function fetchRoom() {
@@ -48,6 +107,26 @@ const RoomDetail = () => {
       fetchRoom();
     }
   }, [id]);
+
+  // 룸의 예약 정보 가져오기
+  useEffect(() => {
+    async function fetchRoomBookings() {
+      if (!room) return;
+      
+      try {
+        setBookingsLoading(true);
+        const bookings = await getRoomBookings(room._id);
+        setRoomBookings(bookings);
+      } catch (error) {
+        console.error('룸 예약 정보 조회 오류:', error);
+        // 예약 정보 조회 실패는 치명적이지 않으므로 에러 상태로 설정하지 않음
+      } finally {
+        setBookingsLoading(false);
+      }
+    }
+    
+    fetchRoomBookings();
+  }, [room]);
 
   // 이미지 자동 슬라이드
   useEffect(() => {
@@ -99,6 +178,49 @@ const RoomDetail = () => {
     return room ? room.price * nights : 0;
   };
 
+  // 예약된 날짜들을 Date 객체로 변환
+  const getBookedDates = () => {
+    const bookedDates = [];
+    roomBookings.forEach(booking => {
+      const checkIn = new Date(booking.checkIn);
+      const checkOut = new Date(booking.checkOut);
+      
+      // 체크인부터 체크아웃 전날까지 모든 날짜를 추가
+      const currentDate = new Date(checkIn);
+      while (currentDate < checkOut) {
+        bookedDates.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    });
+    return bookedDates;
+  };
+
+  // 달력에서 날짜 타일 렌더링 함수
+  const tileClassName = ({ date, view }) => {
+    if (view !== 'month') return null;
+    
+    const bookedDates = getBookedDates();
+    const isBooked = bookedDates.some(bookedDate => 
+      bookedDate.toDateString() === date.toDateString()
+    );
+    
+    if (isBooked) {
+      return 'bg-red-100 text-red-600 font-medium';
+    }
+    
+    return null;
+  };
+
+  // 달력에서 날짜 클릭 비활성화
+  const tileDisabled = ({ date, view }) => {
+    if (view !== 'month') return false;
+    
+    const bookedDates = getBookedDates();
+    return bookedDates.some(bookedDate => 
+      bookedDate.toDateString() === date.toDateString()
+    );
+  };
+
   const handlers = useSwipeable({
     onSwipedLeft: () => handleImageChange((currentImageIndex + 1) % room.images.length),
     onSwipedRight: () => handleImageChange((currentImageIndex - 1 + room.images.length) % room.images.length),
@@ -146,13 +268,13 @@ const RoomDetail = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50">
+      <style>{calendarStyles}</style>
       {/* Header */}
       <header className="bg-white shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link to="/" className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors">
-                <ArrowLeft className="w-5 h-5" />
                 <Home className="w-6 h-6" />
               </Link>
               <div className="flex items-center space-x-2">
@@ -284,6 +406,37 @@ const RoomDetail = () => {
 
           {/* 예약 사이드바 */}
           <div className="lg:col-span-1">
+            {/* 예약 현황 달력 */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">예약 현황</h3>
+              {bookingsLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <div className="calendar-container">
+                  <Calendar
+                    tileClassName={tileClassName}
+                    tileDisabled={tileDisabled}
+                    className="w-full border-0"
+                    formatDay={(locale, date) => date.getDate()}
+                    showNeighboringMonth={false}
+                    minDate={new Date()}
+                  />
+                  <div className="mt-4 text-sm text-gray-600">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="w-4 h-4 bg-red-100 rounded"></div>
+                      <span>예약된 날짜</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-gray-100 rounded"></div>
+                      <span>예약 가능한 날짜</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">예약하기</h3>
               

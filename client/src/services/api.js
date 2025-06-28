@@ -325,4 +325,20 @@ export const getGallery = async () => {
   }
 };
 
+export const getRoomBookings = async (roomId) => {
+  try {
+    // 임시로 모든 예약을 가져와서 해당 룸의 예약만 필터링
+    const response = await api.get('/bookings');
+    const allBookings = response.data;
+    const roomBookings = allBookings.filter(booking => 
+      booking.room && booking.room._id === roomId
+    );
+    return roomBookings;
+  } catch (error) {
+    console.error('룸 예약 정보 조회 오류:', error.response?.data || error.message);
+    // 에러가 발생하면 빈 배열 반환
+    return [];
+  }
+};
+
 export default api; 

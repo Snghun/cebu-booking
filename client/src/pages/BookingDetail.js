@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   Calendar, 
   Users, 
-  ArrowLeft,
   Waves,
   Edit,
   Trash2,
@@ -13,7 +12,8 @@ import {
   User,
   LogOut,
   Save,
-  X
+  X,
+  Home
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getBooking, updateBooking, deleteBooking } from '../services/api';
@@ -247,7 +247,7 @@ const BookingDetail = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link to="/dashboard" className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors">
-                <ArrowLeft className="w-5 h-5" />
+                <Home className="w-5 h-5" />
                 <span>대시보드</span>
               </Link>
               <div className="flex items-center space-x-2">
