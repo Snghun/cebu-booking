@@ -1091,7 +1091,8 @@ async function handleRooms(httpMethod, pathSegments, body, headers) {
         headers,
         body: JSON.stringify({ message: error.message })
       };
-    } else if (httpMethod === 'GET' && pathSegments.length === 3 && pathSegments[2] === 'bookings') {
+    } 
+  } else if (httpMethod === 'GET' && pathSegments.length === 3 && pathSegments[2] === 'bookings') {
       // GET /api/rooms/:id/bookings - 특정 객실의 예약 정보 조회
       const roomId = pathSegments[1];
       try {
@@ -1121,7 +1122,7 @@ async function handleRooms(httpMethod, pathSegments, body, headers) {
     headers,
     body: JSON.stringify({ message: '객실 API 엔드포인트를 찾을 수 없습니다.' }),
   };
-}
+
 
 // Gallery 관련 핸들러
 async function handleGallery(httpMethod, pathSegments, body, headers) {
