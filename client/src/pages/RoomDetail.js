@@ -208,7 +208,8 @@ const RoomDetail = () => {
       return 'bg-red-100 text-red-600 font-medium';
     }
     
-    return null;
+    // 예약 가능한 날짜는 회색 배경으로 표시
+    return 'bg-gray-100 text-gray-700';
   };
 
   // 달력에서 날짜 클릭 비활성화
