@@ -196,7 +196,7 @@ const Dashboard = () => {
               <div className="hidden sm:flex items-center space-x-2">
                 <Waves className="w-6 h-6 text-blue-600" />
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
-                  Cebu Paradise
+                  Cebu Stays
                 </h1>
               </div>
             </div>

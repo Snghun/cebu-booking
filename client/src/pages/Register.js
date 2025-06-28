@@ -107,7 +107,7 @@ const Register = () => {
           <div className="flex items-center justify-center space-x-2 mb-6">
             <Waves className="w-8 h-8 text-blue-600" />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
-              Cebu Paradise Resort
+              Cebu Stays
             </h1>
           </div>
           

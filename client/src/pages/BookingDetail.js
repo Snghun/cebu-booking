@@ -254,7 +254,7 @@ const BookingDetail = () => {
               <div className="hidden sm:flex items-center space-x-2">
                 <Waves className="w-6 h-6 text-blue-600" />
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
-                  Cebu Paradise
+                  Cebu Stays
                 </h1>
               </div>
             </div>
@@ -285,51 +285,53 @@ const BookingDetail = () => {
 
         {/* 예약 상태 */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div className="flex-1">
-              <div className="flex items-center space-x-4 mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
                 {booking.room?.image && (
                   <img 
                     src={booking.room.image} 
                     alt={booking.room.name}
-                    className="w-20 h-20 object-cover rounded-lg"
+                    className="w-full sm:w-20 h-48 sm:h-20 object-cover rounded-lg"
                   />
                 )}
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 break-words">
                     {booking.room?.name || '객실 정보 없음'}
                   </h3>
                   {booking.room?.description && (
-                    <p className="text-gray-600 text-sm mb-2">{booking.room.description}</p>
+                    <p className="text-gray-600 text-sm mb-2 break-words">{booking.room.description}</p>
                   )}
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-sm text-gray-500">
                     {booking.room?.size && (
-                      <span>{booking.room.size}</span>
+                      <span className="whitespace-nowrap">{booking.room.size}</span>
                     )}
                     {booking.room?.capacity && (
-                      <div className="flex items-center">
-                        <Users className="w-4 h-4 mr-1" />
+                      <div className="flex items-center whitespace-nowrap">
+                        <Users className="w-4 h-4 mr-1 flex-shrink-0" />
                         <span>최대 {booking.room.capacity}명</span>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(booking.status)}`}>
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(booking.status)}`}>
                 {getStatusText(booking.status)}
               </span>
             </div>
-            <div className="text-right ml-4">
-              <p className="text-2xl font-bold text-blue-600">
-                ₩{(booking.room?.price || 0).toLocaleString()}
-              </p>
-              <p className="text-sm text-gray-500">1박 기준</p>
-              <p className="text-lg font-semibold text-gray-800 mt-1">
-                총 ₩{(booking.totalPrice || 0).toLocaleString()}
-              </p>
-              <p className="text-sm text-gray-500">
-                ({calculateNights(booking.checkIn, booking.checkOut)}박)
-              </p>
+            <div className="mt-4 lg:mt-0 lg:text-right lg:ml-4">
+              <div className="bg-gray-50 rounded-lg p-4 lg:bg-transparent lg:p-0">
+                <p className="text-xl sm:text-2xl font-bold text-blue-600">
+                  ₩{(booking.room?.price || 0).toLocaleString()}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-500">1박 기준</p>
+                <p className="text-lg sm:text-lg font-semibold text-gray-800 mt-1">
+                  총 ₩{(booking.totalPrice || 0).toLocaleString()}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  ({calculateNights(booking.checkIn, booking.checkOut)}박)
+                </p>
+              </div>
             </div>
           </div>
           

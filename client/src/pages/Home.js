@@ -321,7 +321,7 @@ const CebuResortBooking = () => {
             <div className="flex items-center space-x-2">
               <Waves className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
               <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
-                Cebu Paradise
+                Cebu Stays
               </h1>
             </div>
             <nav className="flex items-center space-x-4 md:space-x-6">
@@ -471,7 +471,7 @@ const CebuResortBooking = () => {
           >
             <img 
               src={image} 
-              alt={`Cebu Resort ${index + 1}`}
+              alt={`Cebu ${index + 1}`}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-br from-sky-300/40 via-cyan-200/30 to-blue-200/25" />
@@ -759,7 +759,7 @@ const CebuResortBooking = () => {
             <div>
               <div className="flex items-center space-x-2 mb-6">
                 <Waves className="w-8 h-8 text-blue-400" />
-                <h4 className="text-2xl font-bold">Cebu Paradise Resort</h4>
+                <h4 className="text-2xl font-bold">Cebu Stays</h4>
               </div>
               <p className="text-gray-400 leading-relaxed">
                 필리핀 세부에서 가장 럭셔리한 리조트 경험을 선사합니다. 
@@ -788,7 +788,7 @@ const CebuResortBooking = () => {
           </div>
           
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500">
-            <p>&copy; 2025 Cebu Paradise Resort. All rights reserved.</p>
+            <p>&copy; 2025 Cebu Stays. All rights reserved.</p>
           </div>
         </div>
       </footer>
