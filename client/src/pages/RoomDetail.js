@@ -10,7 +10,7 @@ import {
   Mail,
   Clock,
   Car,
-  Home
+  ArrowLeft
 } from 'lucide-react';
 import { getRoom, getRoomBookings, createBooking } from '../services/api';
 import { useSwipeable } from 'react-swipeable';
@@ -205,9 +205,9 @@ const RoomDetail = () => {
       const checkIn = new Date(booking.checkIn);
       const checkOut = new Date(booking.checkOut);
       
-      // 체크인부터 체크아웃 전날까지 모든 날짜를 추가
+      // 체크인부터 체크아웃까지 모든 날짜를 추가 (체크아웃 날짜 포함)
       const currentDate = new Date(checkIn);
-      while (currentDate < checkOut) {
+      while (currentDate <= checkOut) {
         bookedDates.push(new Date(currentDate));
         currentDate.setDate(currentDate.getDate() + 1);
       }
@@ -259,7 +259,7 @@ const RoomDetail = () => {
                        String(date.getMonth() + 1).padStart(2, '0') + '-' + 
                        String(date.getDate()).padStart(2, '0');
     
-    // 예약된 날짜인지 확인
+    // 예약된 날짜인지 확인 (체크아웃 날짜까지 포함)
     const bookedDates = getBookedDates();
     const isBooked = bookedDates.some(bookedDate => 
       bookedDate.toDateString() === date.toDateString()
@@ -291,13 +291,26 @@ const RoomDetail = () => {
       const checkInDate = new Date(selectedDate.checkIn);
       const checkOutDate = new Date(clickedDate);
       
-      // 체크아웃이 체크인보다 이전인 경우, 새로운 날짜를 체크인으로 설정
+      // 체크아웃이 체크인보다 이전이거나 같은 경우, 새로운 날짜를 체크인으로 설정
       if (checkOutDate <= checkInDate) {
         setSelectedDate({
           ...selectedDate,
           checkIn: clickedDate,
           checkOut: ''
         });
+        return;
+      }
+      
+      // 체크아웃 날짜가 예약된 기간과 겹치는지 확인
+      const isCheckOutDateConflict = roomBookings.some(booking => {
+        const existingCheckIn = new Date(booking.checkIn);
+        const existingCheckOut = new Date(booking.checkOut);
+        
+        return checkOutDate >= existingCheckIn && checkOutDate <= existingCheckOut;
+      });
+      
+      if (isCheckOutDateConflict) {
+        alert('선택하신 체크아웃 날짜는 이미 예약된 기간입니다.');
         return;
       }
       
@@ -350,9 +363,10 @@ const RoomDetail = () => {
       const existingCheckOut = new Date(booking.checkOut);
       
       // 새로운 예약의 체크인/체크아웃이 기존 예약 기간과 겹치는지 확인
+      // 체크아웃 날짜도 포함하여 검사 (체크아웃 당일에도 새로운 체크인이 불가능)
       return (
-        (checkInDate >= existingCheckIn && checkInDate < existingCheckOut) || // 새로운 체크인이 기존 예약 기간 내
-        (checkOutDate > existingCheckIn && checkOutDate <= existingCheckOut) || // 새로운 체크아웃이 기존 예약 기간 내
+        (checkInDate >= existingCheckIn && checkInDate <= existingCheckOut) || // 새로운 체크인이 기존 예약 기간 내
+        (checkOutDate >= existingCheckIn && checkOutDate <= existingCheckOut) || // 새로운 체크아웃이 기존 예약 기간 내
         (checkInDate <= existingCheckIn && checkOutDate >= existingCheckOut) // 새로운 예약이 기존 예약을 완전히 포함
       );
     });
@@ -480,9 +494,12 @@ const RoomDetail = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link to="/" className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors">
-                <Home className="w-6 h-6" />
-              </Link>
+              <button 
+                onClick={() => navigate(-1)} 
+                className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
               <div className="flex items-center space-x-2">
                 <Waves className="w-6 h-6 text-blue-600" />
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">

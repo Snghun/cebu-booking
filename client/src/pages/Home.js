@@ -233,9 +233,10 @@ const CebuResortBooking = () => {
           const existingCheckOut = new Date(booking.checkOut);
           
           // 새로운 예약의 체크인/체크아웃이 기존 예약 기간과 겹치는지 확인
+          // 체크아웃 날짜도 포함하여 검사 (체크아웃 당일에도 새로운 체크인이 불가능)
           return (
-            (checkInDate >= existingCheckIn && checkInDate < existingCheckOut) || // 새로운 체크인이 기존 예약 기간 내
-            (checkOutDate > existingCheckIn && checkOutDate <= existingCheckOut) || // 새로운 체크아웃이 기존 예약 기간 내
+            (checkInDate >= existingCheckIn && checkInDate <= existingCheckOut) || // 새로운 체크인이 기존 예약 기간 내
+            (checkOutDate >= existingCheckIn && checkOutDate <= existingCheckOut) || // 새로운 체크아웃이 기존 예약 기간 내
             (checkInDate <= existingCheckIn && checkOutDate >= existingCheckOut) // 새로운 예약이 기존 예약을 완전히 포함
           );
         });
@@ -358,6 +359,14 @@ const CebuResortBooking = () => {
                         {user?.username}
                       </Link>
                     </div>
+                    {/* 모바일에서 대시보드 이동 아이콘 */}
+                    <Link
+                      to="/dashboard"
+                      className="md:hidden text-gray-700 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                      title="대시보드로 이동"
+                    >
+                      <User className="w-5 h-5" />
+                    </Link>
                     {user?.isAdmin && (
                       <Link
                         to="/admin"
@@ -367,9 +376,10 @@ const CebuResortBooking = () => {
                         <BarChart3 className="w-5 h-5" />
                       </Link>
                     )}
+                    {/* 데스크톱에서만 로그아웃 아이콘 표시 */}
                     <button
                       onClick={handleLogout}
-                      className="text-gray-700 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
+                      className="hidden md:block text-gray-700 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
                       title="로그아웃"
                     >
                       <LogOut className="w-5 h-5" />
