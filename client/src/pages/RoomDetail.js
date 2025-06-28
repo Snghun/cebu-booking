@@ -426,7 +426,7 @@ const RoomDetail = () => {
                   />
                   <div className="mt-4 text-sm text-gray-600">
                     <div className="flex items-center space-x-2 mb-2">
-                      <div className="w-4 h-4 bg-red-100 rounded"></div>
+                      <div className="w-4 h-4 bg-gray-100 rounded"></div>
                       <span>예약된 날짜</span>
                     </div>
                     <div className="flex items-center space-x-2">
