@@ -233,7 +233,7 @@ const CebuResortBooking = () => {
         specialRequests: guestInfo.specialRequests ? guestInfo.specialRequests.trim() : ''
       };
       
-      const result = await createBooking(bookingData);
+      await createBooking(bookingData);
       
       alert('예약이 성공적으로 완료되었습니다!');
       

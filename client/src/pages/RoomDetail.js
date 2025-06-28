@@ -16,7 +16,6 @@ import { getRoom, getRoomBookings, createBooking } from '../services/api';
 import { useSwipeable } from 'react-swipeable';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useAuth } from '../context/AuthContext';
 
 // 달력 스타일 오버라이드
 const calendarStyles = `
