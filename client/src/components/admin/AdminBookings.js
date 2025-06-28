@@ -103,9 +103,9 @@ const AdminBookings = () => {
   return (
     <div className="space-y-6">
       {/* 페이지 헤더 */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">예약 관리</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">예약 관리</h2>
           <p className="text-gray-600 mt-1">모든 예약을 확인하고 관리하세요</p>
         </div>
         <div className="text-sm text-gray-500">
@@ -115,24 +115,22 @@ const AdminBookings = () => {
 
       {/* 검색 및 필터 */}
       <div className="bg-white rounded-lg shadow-sm border p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="예약자명, 이메일, 객실명으로 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+        <div className="flex flex-col gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="예약자명, 이메일, 객실명으로 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
           <div className="flex gap-2">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">전체</option>
               <option value="confirmed">확정</option>
@@ -144,7 +142,7 @@ const AdminBookings = () => {
                 setSearchTerm('');
                 setFilterStatus('all');
               }}
-              className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors border border-gray-300 rounded-lg"
             >
               <X className="w-4 h-4" />
             </button>
@@ -152,8 +150,8 @@ const AdminBookings = () => {
         </div>
       </div>
 
-      {/* 예약 목록 */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      {/* 예약 목록 - 데스크톱 테이블 */}
+      <div className="hidden lg:block bg-white rounded-lg shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -211,7 +209,9 @@ const AdminBookings = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{booking.guests}명</div>
+                    <div className="text-sm text-gray-900">
+                      {booking.guestCount || booking.guestInfo?.guestCount || '-'}명
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
@@ -219,12 +219,18 @@ const AdminBookings = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      booking.status === 'confirmed' 
+                        ? 'bg-green-100 text-green-800' 
+                        : booking.status === 'pending' 
+                        ? 'bg-yellow-100 text-yellow-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
                       {booking.status === 'confirmed' ? '확정' : booking.status === 'pending' ? '대기' : booking.status === 'cancelled' ? '취소' : booking.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex space-x-2">
                       <button
                         onClick={() => handleViewDetail(booking)}
                         className="text-blue-600 hover:text-blue-900 transition-colors"
@@ -246,6 +252,77 @@ const AdminBookings = () => {
             </tbody>
           </table>
         </div>
+        {filteredBookings.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            {searchTerm || filterStatus !== 'all' ? '검색 결과가 없습니다.' : '예약이 없습니다.'}
+          </div>
+        )}
+      </div>
+
+      {/* 예약 목록 - 모바일 카드 */}
+      <div className="lg:hidden space-y-4">
+        {filteredBookings.map((booking) => (
+          <div key={booking._id} className="bg-white rounded-lg shadow-sm border p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <h3 className="font-medium text-gray-900">
+                  {booking.user?.username || booking.guestInfo?.guestName}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {booking.user?.email || booking.guestInfo?.guestEmail}
+                </p>
+              </div>
+              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                booking.status === 'confirmed' 
+                  ? 'bg-green-100 text-green-800' 
+                  : booking.status === 'pending' 
+                  ? 'bg-yellow-100 text-yellow-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {booking.status === 'confirmed' ? '확정' : booking.status === 'pending' ? '대기' : booking.status === 'cancelled' ? '취소' : booking.status}
+              </span>
+            </div>
+            
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">객실:</span>
+                <span className="font-medium">{booking.room?.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">체크인:</span>
+                <span>{new Date(booking.checkIn).toLocaleDateString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">체크아웃:</span>
+                <span>{new Date(booking.checkOut).toLocaleDateString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">투숙객:</span>
+                <span>{booking.guestCount || booking.guestInfo?.guestCount || '-'}명</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">가격:</span>
+                <span className="font-medium">₩{booking.totalPrice?.toLocaleString()}</span>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2 mt-4 pt-3 border-t">
+              <button
+                onClick={() => handleViewDetail(booking)}
+                className="text-blue-600 hover:text-blue-900 transition-colors text-sm"
+              >
+                상세보기
+              </button>
+              <button
+                onClick={() => handleDeleteBooking(booking._id)}
+                className="text-red-600 hover:text-red-900 transition-colors text-sm"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        ))}
+        
         {filteredBookings.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             {searchTerm || filterStatus !== 'all' ? '검색 결과가 없습니다.' : '예약이 없습니다.'}
@@ -324,7 +401,7 @@ const AdminBookings = () => {
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">투숙객</p>
-                        <p className="font-medium">{selectedBooking.guests}명</p>
+                        <p className="font-medium">{selectedBooking.guestCount || selectedBooking.guestInfo?.guestCount || '-'}명</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">예약일</p>
