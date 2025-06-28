@@ -160,14 +160,6 @@ const CebuResortBooking = () => {
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('예약 제출 시작 - 현재 상태:', {
-      selectedRoom: selectedRoom ? selectedRoom._id : null,
-      checkIn,
-      checkOut,
-      guests,
-      guestInfo
-    });
-    
     // 필수 필드 검증
     if (!selectedRoom) {
       alert('객실을 선택해주세요.');
@@ -222,8 +214,6 @@ const CebuResortBooking = () => {
       }
       
       const token = localStorage.getItem('token');
-      console.log('예약 제출 시 사용자 정보:', user);
-      console.log('예약 제출 시 토큰:', token ? '존재함' : '없음');
       
       if (!token) {
         alert('로그인 토큰이 없습니다. 다시 로그인해주세요.');
@@ -243,10 +233,7 @@ const CebuResortBooking = () => {
         specialRequests: guestInfo.specialRequests ? guestInfo.specialRequests.trim() : ''
       };
       
-      console.log('예약 데이터:', bookingData);
-      
       const result = await createBooking(bookingData);
-      console.log('예약 생성 결과:', result);
       
       alert('예약이 성공적으로 완료되었습니다!');
       

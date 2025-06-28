@@ -12,10 +12,11 @@ import {
   Car,
   Home
 } from 'lucide-react';
-import { getRoom, getRoomBookings } from '../services/api';
+import { getRoom, getRoomBookings, createBooking } from '../services/api';
 import { useSwipeable } from 'react-swipeable';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { useAuth } from '../context/AuthContext';
 
 // 달력 스타일 오버라이드
 const calendarStyles = `
@@ -88,6 +89,14 @@ const RoomDetail = () => {
   });
   const [roomBookings, setRoomBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    guestName: '',
+    guestEmail: '',
+    guestPhone: '',
+    specialRequests: ''
+  });
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   useEffect(() => {
     async function fetchRoom() {
@@ -148,21 +157,33 @@ const RoomDetail = () => {
     setCurrentImageIndex(index);
   };
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!selectedDate.checkIn || !selectedDate.checkOut) {
       alert('체크인/체크아웃 날짜를 선택해주세요.');
       return;
     }
     
-    // 홈페이지로 이동하면서 선택된 정보 전달
-    navigate('/', { 
-      state: { 
-        selectedRoom: room,
-        checkIn: selectedDate.checkIn,
-        checkOut: selectedDate.checkOut,
-        guests: selectedDate.guests
-      }
+    // 로그인 상태 확인
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    
+    if (!token || !user) {
+      // 로그인되지 않은 상태
+      alert('예약을 위해 로그인이 필요합니다.\n로그인 페이지로 이동합니다.');
+      navigate('/login');
+      return;
+    }
+    
+    // 로그인된 상태 - 사용자 정보로 예약 폼 초기화
+    setBookingForm({
+      guestName: user.username || '',
+      guestEmail: user.email || '',
+      guestPhone: '',
+      specialRequests: ''
     });
+    
+    // 예약 정보 입력 모달 표시
+    setShowBookingForm(true);
   };
 
   const calculateNights = () => {
@@ -227,6 +248,87 @@ const RoomDetail = () => {
     onSwipedRight: () => handleImageChange((currentImageIndex - 1 + room.images.length) % room.images.length),
     trackMouse: true,
   });
+
+  // 예약 제출 처리
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
+    
+    // 필수 필드 검증
+    if (!bookingForm.guestName.trim()) {
+      alert('예약자 이름을 입력해주세요.');
+      return;
+    }
+    
+    if (!bookingForm.guestEmail.trim()) {
+      alert('예약자 이메일을 입력해주세요.');
+      return;
+    }
+    
+    // 이메일 형식 검증
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(bookingForm.guestEmail)) {
+      alert('올바른 이메일 형식을 입력해주세요.');
+      return;
+    }
+    
+    if (!bookingForm.guestPhone.trim()) {
+      alert('예약자 전화번호를 입력해주세요.');
+      return;
+    }
+    
+    try {
+      setBookingLoading(true);
+      
+      const bookingData = {
+        roomId: room._id,
+        checkIn: selectedDate.checkIn,
+        checkOut: selectedDate.checkOut,
+        guests: selectedDate.guests,
+        guestName: bookingForm.guestName.trim(),
+        guestEmail: bookingForm.guestEmail.trim(),
+        guestPhone: bookingForm.guestPhone.trim(),
+        specialRequests: bookingForm.specialRequests.trim()
+      };
+      
+      await createBooking(bookingData);
+      
+      alert('예약이 성공적으로 완료되었습니다!\n예약 내역을 확인하시겠습니까?');
+      
+      // 폼 초기화 및 모달 닫기
+      setShowBookingForm(false);
+      setBookingForm({
+        guestName: '',
+        guestEmail: '',
+        guestPhone: '',
+        specialRequests: ''
+      });
+      
+      // 예약 목록 새로고침
+      const updatedBookings = await getRoomBookings(room._id);
+      setRoomBookings(updatedBookings);
+      
+      // 예약자 대시보드로 이동
+      navigate('/dashboard');
+      
+    } catch (error) {
+      console.error('예약 생성 실패:', error);
+      const errorMessage = error.response?.data?.message || '예약 생성에 실패했습니다.';
+      
+      // JWT 토큰 만료 또는 인증 오류인 경우
+      if (error.response?.status === 401 || errorMessage.includes('jwt expired') || errorMessage.includes('jwt')) {
+        alert('로그인 세션이 만료되었습니다.\n다시 로그인해주세요.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setShowBookingForm(false);
+        navigate('/login');
+        return;
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setBookingLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -551,6 +653,137 @@ const RoomDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* 예약 폼 모달 */}
+      {showBookingForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">예약 정보 입력</h3>
+                <button
+                  onClick={() => setShowBookingForm(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <form onSubmit={handleBookingSubmit} className="space-y-4">
+                {/* 예약 요약 정보 */}
+                <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                  <h4 className="font-medium text-gray-900 mb-2">예약 요약</h4>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <div className="flex justify-between">
+                      <span>객실:</span>
+                      <span className="font-medium">{room.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>체크인:</span>
+                      <span className="font-medium">{selectedDate.checkIn}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>체크아웃:</span>
+                      <span className="font-medium">{selectedDate.checkOut}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>투숙객:</span>
+                      <span className="font-medium">{selectedDate.guests}명</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>총 가격:</span>
+                      <span className="font-medium text-blue-600">₩{calculateTotalPrice().toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 예약자 정보 입력 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    예약자 이름 *
+                  </label>
+                  <input
+                    type="text"
+                    value={bookingForm.guestName}
+                    onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="예약자 이름을 입력하세요"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">로그인된 사용자 정보가 자동으로 입력되었습니다.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    이메일 *
+                  </label>
+                  <input
+                    type="email"
+                    value={bookingForm.guestEmail}
+                    onChange={(e) => setBookingForm({...bookingForm, guestEmail: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="example@email.com"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">로그인된 사용자 정보가 자동으로 입력되었습니다.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    전화번호 *
+                  </label>
+                  <input
+                    type="tel"
+                    value={bookingForm.guestPhone}
+                    onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="010-1234-5678"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    특별 요청사항
+                  </label>
+                  <textarea
+                    value={bookingForm.specialRequests}
+                    onChange={(e) => setBookingForm({...bookingForm, specialRequests: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="특별 요청사항이 있으시면 입력해주세요"
+                    rows="3"
+                  />
+                </div>
+
+                {/* 버튼 */}
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowBookingForm(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={bookingLoading}
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-teal-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {bookingLoading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>예약 중...</span>
+                      </div>
+                    ) : (
+                      '예약 완료'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

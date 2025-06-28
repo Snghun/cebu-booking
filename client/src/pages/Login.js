@@ -41,31 +41,23 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     setError('');
 
     if (!validateForm()) {
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      // AuthContext의 login 함수만 호출 (내부적으로 loginUser를 호출함)
       await login(formData.email.trim().toLowerCase(), formData.password);
-      console.log('저장된 토큰:', localStorage.getItem('token'));
-
-      // 로그인 성공 후 홈페이지로 이동
+      
+      // 홈페이지로 리다이렉트
       navigate('/');
       
     } catch (error) {
-      console.error('로그인 오류:', error);
-      if (error.response?.data?.message) {
-        setError(error.response.data.message);
-      } else if (error.message) {
-        setError(error.message);
-      } else {
-        setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
-      }
+      const errorMessage = error.response?.data?.message || '로그인에 실패했습니다.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

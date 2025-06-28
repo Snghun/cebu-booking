@@ -28,20 +28,23 @@ api.interceptors.request.use(
   }
 );
 
-// 응답 인터셉터 (에러 처리)
+// 응답 인터셉터
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API 응답 오류:', error.response?.status, error.response?.data);
-    console.error('오류 메시지:', error.message);
-    console.error('요청 URL:', error.config?.url);
-    
-    // 관리자 API가 아닌 경우에만 자동 로그아웃 처리
-    if (error.response?.status === 401 && !error.config?.url?.includes('/admin/')) {
-      console.log('관리자 API가 아닌 401 오류로 인한 자동 로그아웃');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    if (error.response?.status === 401) {
+      // JWT 토큰 만료 또는 인증 오류
+      const errorMessage = error.response?.data?.message || '';
+      
+      // 관리자 API가 아닌 경우에만 자동 로그아웃
+      if (!error.config.url.includes('/admin')) {
+        // JWT 관련 오류인지 확인
+        if (errorMessage.includes('jwt expired') || errorMessage.includes('jwt') || errorMessage.includes('token')) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
+      }
     }
     return Promise.reject(error);
   }
@@ -61,23 +64,11 @@ export const userAPI = {
 
 export const loginUser = async (email, password) => {
   try {
-    // 데이터 검증
-    if (typeof email !== 'string' || typeof password !== 'string') {
-      throw new Error('이메일과 비밀번호는 문자열이어야 합니다.');
-    }
-    
-    if (!email.trim() || !password.trim()) {
-      throw new Error('이메일과 비밀번호를 입력해주세요.');
-    }
-    
-    console.log('로그인 요청 데이터:', { email: email.trim(), password: '***' });
-    
     const response = await api.post('/users/login', { 
       email: email.trim(), 
       password: password.trim() 
     });
     
-    console.log('로그인 응답:', response.data);
     return response.data;
   } catch (error) {
     console.error('로그인 오류:', error.response?.data || error.message);
