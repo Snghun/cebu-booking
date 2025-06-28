@@ -275,6 +275,37 @@ const RoomDetail = () => {
       return;
     }
     
+    // 날짜 중복 검사
+    const checkInDate = new Date(selectedDate.checkIn);
+    const checkOutDate = new Date(selectedDate.checkOut);
+    
+    const isDateConflict = roomBookings.some(booking => {
+      const existingCheckIn = new Date(booking.checkIn);
+      const existingCheckOut = new Date(booking.checkOut);
+      
+      // 새로운 예약의 체크인/체크아웃이 기존 예약 기간과 겹치는지 확인
+      return (
+        (checkInDate >= existingCheckIn && checkInDate < existingCheckOut) || // 새로운 체크인이 기존 예약 기간 내
+        (checkOutDate > existingCheckIn && checkOutDate <= existingCheckOut) || // 새로운 체크아웃이 기존 예약 기간 내
+        (checkInDate <= existingCheckIn && checkOutDate >= existingCheckOut) // 새로운 예약이 기존 예약을 완전히 포함
+      );
+    });
+    
+    if (isDateConflict) {
+      alert('선택하신 날짜에 이미 예약이 있습니다.\n다른 날짜를 선택해주세요.');
+      
+      // 날짜 초기화
+      setSelectedDate({
+        checkIn: '',
+        checkOut: '',
+        guests: 2
+      });
+      
+      // 모달 닫기
+      setShowBookingForm(false);
+      return;
+    }
+    
     try {
       setBookingLoading(true);
       
@@ -300,6 +331,13 @@ const RoomDetail = () => {
         guestEmail: '',
         guestPhone: '',
         specialRequests: ''
+      });
+      
+      // 날짜 초기화
+      setSelectedDate({
+        checkIn: '',
+        checkOut: '',
+        guests: 2
       });
       
       // 예약 목록 새로고침

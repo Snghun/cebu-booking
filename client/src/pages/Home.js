@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Star, Users, Wifi, Car, Coffee, Waves, LogIn, UserPlus, Menu, X, LogOut, User, BarChart3 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getRooms, getGallery, createBooking } from '../services/api';
+import { getRooms, getGallery, createBooking, getRoomBookings } from '../services/api';
 
 const CebuResortBooking = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -220,6 +220,40 @@ const CebuResortBooking = () => {
         logout();
         navigate('/login');
         return;
+      }
+      
+      // 날짜 중복 검사
+      try {
+        const roomBookings = await getRoomBookings(selectedRoom._id);
+        const checkInDate = new Date(checkIn);
+        const checkOutDate = new Date(checkOut);
+        
+        const isDateConflict = roomBookings.some(booking => {
+          const existingCheckIn = new Date(booking.checkIn);
+          const existingCheckOut = new Date(booking.checkOut);
+          
+          // 새로운 예약의 체크인/체크아웃이 기존 예약 기간과 겹치는지 확인
+          return (
+            (checkInDate >= existingCheckIn && checkInDate < existingCheckOut) || // 새로운 체크인이 기존 예약 기간 내
+            (checkOutDate > existingCheckIn && checkOutDate <= existingCheckOut) || // 새로운 체크아웃이 기존 예약 기간 내
+            (checkInDate <= existingCheckIn && checkOutDate >= existingCheckOut) // 새로운 예약이 기존 예약을 완전히 포함
+          );
+        });
+        
+        if (isDateConflict) {
+          alert('선택하신 날짜에 이미 예약이 있습니다.\n다른 날짜를 선택해주세요.');
+          
+          // 날짜 초기화
+          setCheckIn('');
+          setCheckOut('');
+          
+          // 모달 닫기
+          setShowBookingModal(false);
+          return;
+        }
+      } catch (error) {
+        console.error('예약 정보 조회 실패:', error);
+        // 예약 정보 조회 실패 시에도 예약 진행 (서버에서 중복 검사 수행)
       }
       
       const bookingData = {
