@@ -193,7 +193,7 @@ const Dashboard = () => {
               <Link to="/" className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors" title="홈으로">
                 <Home className="w-6 h-6" />
               </Link>
-              <div className="flex items-center space-x-2">
+              <div className="hidden sm:flex items-center space-x-2">
                 <Waves className="w-6 h-6 text-blue-600" />
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
                   Cebu Paradise
