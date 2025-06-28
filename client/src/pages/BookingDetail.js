@@ -13,7 +13,8 @@ import {
   LogOut,
   Save,
   X,
-  Home
+  ArrowLeft,
+  CreditCard
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getBooking, updateBooking, deleteBooking } from '../services/api';
@@ -247,10 +248,10 @@ const BookingDetail = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link to="/dashboard" className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors">
-                <Home className="w-5 h-5" />
+                <ArrowLeft className="w-5 h-5" />
                 <span>대시보드</span>
               </Link>
-              <div className="flex items-center space-x-2">
+              <div className="hidden sm:flex items-center space-x-2">
                 <Waves className="w-6 h-6 text-blue-600" />
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
                   Cebu Paradise
@@ -355,13 +356,15 @@ const BookingDetail = () => {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-bold text-gray-900">예약 정보</h3>
             {!isEditing ? (
-              <button
-                onClick={handleEdit}
-                className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <Edit className="w-4 h-4" />
-                <span>수정</span>
-              </button>
+              booking.status !== 'confirmed' && (
+                <button
+                  onClick={handleEdit}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>수정</span>
+                </button>
+              )
             ) : (
               <div className="flex space-x-2">
                 <button
@@ -527,14 +530,23 @@ const BookingDetail = () => {
           {/* 예약 취소 버튼 */}
           {booking.status === 'pending' && (
             <div className="mt-8 pt-6 border-t border-gray-200">
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-colors flex items-center space-x-2 disabled:opacity-50"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>{deleting ? '취소 중...' : '예약 취소'}</span>
-              </button>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => alert('결제 기능은 준비 중입니다.')}
+                  className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors flex items-center space-x-2"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>결제</span>
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-colors flex items-center space-x-2 disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>{deleting ? '취소 중...' : '예약 취소'}</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
