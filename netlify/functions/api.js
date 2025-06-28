@@ -5,8 +5,10 @@ const jwt = require('jsonwebtoken');
 
 // CORS 설정
 const corsHandler = cors({
-  origin: true,
-  credentials: true,
+  origin: '*',
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 });
 
 // MongoDB 연결
@@ -313,12 +315,11 @@ const Gallery = getOrCreateModel('Gallery', gallerySchema);
 
 // Netlify Function 핸들러
 exports.handler = async (event, context) => {
-  // CORS 헤더 설정
+  // 기본 CORS 헤더 설정
   const headers = {
-    'Access-Control-Allow-Origin': 'http://localhost:3000',
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Credentials': 'true',
     'Content-Type': 'application/json',
   };
 
@@ -327,7 +328,7 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ message: 'CORS preflight OK' }),
+      body: JSON.stringify({ message: 'CORS preflight OK' })
     };
   }
 
@@ -1093,27 +1094,26 @@ async function handleRooms(httpMethod, pathSegments, body, headers) {
       };
     } 
   } else if (httpMethod === 'GET' && pathSegments.length === 3 && pathSegments[2] === 'bookings') {
-      // GET /api/rooms/:id/bookings - 특정 객실의 예약 정보 조회
-      const roomId = pathSegments[1];
-      try {
-        await ensureConnection();
-        const bookings = await Booking.find({ 
-          room: roomId, 
-          status: { $in: ['confirmed', 'pending'] } 
-        }).select('checkIn checkOut status');
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify(bookings)
-        };
-      } catch (error) {
-        console.error('객실 예약 정보 조회 오류:', error);
-        return {
-          statusCode: 500,
-          headers,
-          body: JSON.stringify({ message: error.message })
-        };
-      }
+    // GET /api/rooms/:id/bookings - 특정 객실의 예약 정보 조회
+    const roomId = pathSegments[1];
+    try {
+      await ensureConnection();
+      const bookings = await Booking.find({ 
+        room: roomId, 
+        status: { $in: ['confirmed', 'pending'] } 
+      }).select('checkIn checkOut status');
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(bookings)
+      };
+    } catch (error) {
+      console.error('객실 예약 정보 조회 오류:', error);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ message: error.message })
+      };
     }
   }
   
@@ -1122,7 +1122,7 @@ async function handleRooms(httpMethod, pathSegments, body, headers) {
     headers,
     body: JSON.stringify({ message: '객실 API 엔드포인트를 찾을 수 없습니다.' }),
   };
-
+}
 
 // Gallery 관련 핸들러
 async function handleGallery(httpMethod, pathSegments, body, headers) {
