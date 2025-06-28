@@ -60,6 +60,12 @@ export const userAPI = {
   
   // 사용자 목록 조회
   getUsers: () => api.get('/users'),
+  
+  // 사용자 정보 수정
+  updateProfile: (userData) => api.put('/users/profile', userData),
+  
+  // 비밀번호 변경
+  changePassword: (passwordData) => api.put('/users/password', passwordData),
 };
 
 export const loginUser = async (email, password) => {
@@ -82,6 +88,37 @@ export const registerUser = async (username, email, password) => {
     return response.data;
   } catch (error) {
     console.error('회원가입 오류:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// 사용자 정보 수정
+export const updateUserProfile = async (userData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.put('/users/profile', userData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('사용자 정보 수정 오류:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// 비밀번호 변경
+export const changeUserPassword = async (currentPassword, newPassword) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.put('/users/password', {
+      currentPassword,
+      newPassword
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('비밀번호 변경 오류:', error.response?.data || error.message);
     throw error;
   }
 };

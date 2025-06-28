@@ -485,6 +485,140 @@ async function handleUsers(httpMethod, pathSegments, body, headers, event) {
       headers,
       body: JSON.stringify(responseData),
     };
+  } else if (httpMethod === 'PUT' && pathSegments[1] === 'profile') {
+    // PUT /api/users/profile - 사용자 정보 수정
+    const token = event.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ message: '로그인이 필요합니다.' })
+      };
+    }
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      const { username, email } = parsedBody;
+      
+      // 현재 사용자 조회
+      const user = await User.findById(decoded.userId);
+      if (!user) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '사용자를 찾을 수 없습니다.' })
+        };
+      }
+      
+      // 이메일 중복 확인 (자신의 이메일 제외)
+      if (email && email !== user.email) {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ message: '이미 사용 중인 이메일입니다.' })
+          };
+        }
+      }
+      
+      // 사용자명 중복 확인 (자신의 사용자명 제외)
+      if (username && username !== user.username) {
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ message: '이미 사용 중인 사용자명입니다.' })
+          };
+        }
+      }
+      
+      // 정보 업데이트
+      if (username) user.username = username;
+      if (email) user.email = email;
+      
+      await user.save();
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ 
+          message: '사용자 정보가 수정되었습니다.',
+          user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            isAdmin: user.isAdmin
+          }
+        })
+      };
+    } catch (error) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ message: '유효하지 않은 토큰입니다.' })
+      };
+    }
+  } else if (httpMethod === 'PUT' && pathSegments[1] === 'password') {
+    // PUT /api/users/password - 비밀번호 변경
+    const token = event.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ message: '로그인이 필요합니다.' })
+      };
+    }
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      const { currentPassword, newPassword } = parsedBody;
+      
+      if (!currentPassword || !newPassword) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ message: '현재 비밀번호와 새 비밀번호를 입력해주세요.' })
+        };
+      }
+      
+      // 현재 사용자 조회
+      const user = await User.findById(decoded.userId);
+      if (!user) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '사용자를 찾을 수 없습니다.' })
+        };
+      }
+      
+      // 현재 비밀번호 확인
+      const isMatch = await user.comparePassword(currentPassword);
+      if (!isMatch) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ message: '현재 비밀번호가 일치하지 않습니다.' })
+        };
+      }
+      
+      // 새 비밀번호 설정
+      user.password = newPassword;
+      await user.save();
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ message: '비밀번호가 변경되었습니다.' })
+      };
+    } catch (error) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ message: '유효하지 않은 토큰입니다.' })
+      };
+    }
   }
   
   return {
