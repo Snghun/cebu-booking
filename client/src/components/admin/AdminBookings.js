@@ -210,7 +210,7 @@ const AdminBookings = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {booking.guestCount || booking.guestInfo?.guestCount || '-'}명
+                      {booking.guests || '-'}명
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -298,7 +298,7 @@ const AdminBookings = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">투숙객:</span>
-                <span>{booking.guestCount || booking.guestInfo?.guestCount || '-'}명</span>
+                <span>{booking.guests || '-'}명</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">가격:</span>
@@ -401,7 +401,7 @@ const AdminBookings = () => {
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">투숙객</p>
-                        <p className="font-medium">{selectedBooking.guestCount || selectedBooking.guestInfo?.guestCount || '-'}명</p>
+                        <p className="font-medium">{selectedBooking.guests || '-'}명</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">예약일</p>

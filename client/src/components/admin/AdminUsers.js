@@ -286,7 +286,7 @@ const AdminUsers = () => {
                             </div>
                             <div>
                               <p className="text-gray-600">투숙객</p>
-                              <p className="font-medium">{booking.guestCount || booking.guestInfo?.guestCount || '-'}명</p>
+                              <p className="font-medium">{booking.guests || '-'}명</p>
                             </div>
                           </div>
                         </div>

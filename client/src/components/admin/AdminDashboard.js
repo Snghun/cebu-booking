@@ -7,11 +7,13 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { getAdminDashboard } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
@@ -29,6 +31,10 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleQuickAction = (menu) => {
+    navigate(`/admin?menu=${menu}`);
   };
 
   const statsCards = [
@@ -240,6 +246,10 @@ const AdminDashboard = () => {
                   <span className="text-gray-600">가격:</span>
                   <span className="font-medium">₩{booking.totalPrice?.toLocaleString()}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">투숙객:</span>
+                  <span>{booking.guests || '-'}명</span>
+                </div>
               </div>
             </div>
           ))}
@@ -253,42 +263,53 @@ const AdminDashboard = () => {
 
       {/* 빠른 액션 */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-        <div className="bg-white rounded-lg shadow-sm border p-3 sm:p-4 lg:p-6">
+        <button
+          onClick={() => handleQuickAction('bookings')}
+          className="bg-white rounded-lg shadow-sm border p-3 sm:p-4 lg:p-6 hover:shadow-md transition-all duration-200 text-left group"
+        >
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg flex-shrink-0">
+            <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg flex-shrink-0 group-hover:bg-blue-200 transition-colors">
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="font-medium text-gray-900 text-sm sm:text-base">예약 관리</h4>
               <p className="text-xs sm:text-sm text-gray-600 mt-1">모든 예약을 확인하고 관리하세요</p>
             </div>
-            <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
           </div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm border p-3 sm:p-4 lg:p-6">
+        </button>
+        
+        <button
+          onClick={() => handleQuickAction('users')}
+          className="bg-white rounded-lg shadow-sm border p-3 sm:p-4 lg:p-6 hover:shadow-md transition-all duration-200 text-left group"
+        >
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg flex-shrink-0">
+            <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg flex-shrink-0 group-hover:bg-green-200 transition-colors">
               <Users className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-600" />
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="font-medium text-gray-900 text-sm sm:text-base">고객 관리</h4>
               <p className="text-xs sm:text-sm text-gray-600 mt-1">고객 정보를 확인하고 관리하세요</p>
             </div>
-            <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 group-hover:text-green-600 group-hover:translate-x-1 transition-all" />
           </div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm border p-3 sm:p-4 lg:p-6">
+        </button>
+        
+        <button
+          onClick={() => handleQuickAction('rooms')}
+          className="bg-white rounded-lg shadow-sm border p-3 sm:p-4 lg:p-6 hover:shadow-md transition-all duration-200 text-left group"
+        >
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
+            <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0 group-hover:bg-purple-200 transition-colors">
               <Home className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="font-medium text-gray-900 text-sm sm:text-base">객실 관리</h4>
               <p className="text-xs sm:text-sm text-gray-600 mt-1">객실 정보를 수정하고 관리하세요</p>
             </div>
-            <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" />
           </div>
-        </div>
+        </button>
       </div>
     </div>
   );
