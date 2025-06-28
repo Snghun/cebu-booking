@@ -5,7 +5,7 @@ import {
   X
 } from 'lucide-react';
 import { getAdminUsers } from '../../services/api';
-import axios from 'axios';
+import api from '../../services/api';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -33,17 +33,13 @@ const AdminUsers = () => {
     }
   };
 
-  // 상세보기용 사용자 조회 함수 (새로 구현)
+  // 상세보기용 사용자 조회 함수 (수정)
   const fetchUserDetail = async (userId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `/admin/users/${userId}`,
-        {
-          baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8888/.netlify/functions/api',
-          headers: { 'Authorization': `Bearer ${token}` }
-        }
-      );
+      const response = await api.get(`/admin/users/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       return response.data;
     } catch (error) {
       console.error('관리자 사용자 상세 조회 오류:', error.response?.data || error.message);
