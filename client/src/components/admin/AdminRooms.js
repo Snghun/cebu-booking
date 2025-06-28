@@ -309,128 +309,153 @@ const AdminRooms = () => {
         </button>
       </div>
 
-      {/* 객실 목록 - 데스크톱 테이블 */}
-      <div className="hidden lg:block bg-white rounded-lg shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">객실명</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">타입</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">가격</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">크기</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수용인원</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">액션</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {rooms.map((room) => (
-                <tr key={room._id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleRowClick(room)}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{room.name}</div>
-                    <div className="text-sm text-gray-500">{room.description}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{room.roomType}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">₩{room.price?.toLocaleString()}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{room.size}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{room.capacity}명</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      room.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {room.isAvailable ? '예약 가능' : '예약 불가'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(room._id);
-                      }}
-                      className="text-red-600 hover:text-red-900 transition-colors"
-                    >
-                      삭제
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* 로딩 상태 */}
+      {loading && (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-        {rooms.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            객실이 없습니다.
-          </div>
-        )}
-      </div>
+      )}
 
-      {/* 객실 목록 - 모바일 카드 */}
-      <div className="lg:hidden space-y-4">
-        {rooms.map((room) => (
-          <div key={room._id} className="bg-white rounded-lg shadow-sm border p-4">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex-1">
-                <h3 className="font-medium text-gray-900">{room.name}</h3>
-                <p className="text-sm text-gray-500">{room.description}</p>
-              </div>
-              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                room.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {room.isAvailable ? '예약 가능' : '예약 불가'}
-              </span>
+      {/* 에러 상태 */}
+      {error && (
+        <div className="text-center py-8">
+          <div className="text-red-500 mb-4">{error}</div>
+          <button
+            onClick={fetchRooms}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            다시 시도
+          </button>
+        </div>
+      )}
+
+      {/* 객실 목록 - 로딩/에러가 아닐 때만 표시 */}
+      {!loading && !error && (
+        <>
+          {/* 객실 목록 - 데스크톱 테이블 */}
+          <div className="hidden lg:block bg-white rounded-lg shadow-sm border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">객실명</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">타입</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">가격</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">크기</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수용인원</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">액션</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {rooms.map((room) => (
+                    <tr key={room._id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleRowClick(room)}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{room.name}</div>
+                        <div className="text-sm text-gray-500">{room.description}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{room.roomType}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">₩{room.price?.toLocaleString()}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{room.size}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{room.capacity}명</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          room.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {room.isAvailable ? '예약 가능' : '예약 불가'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(room._id);
+                          }}
+                          className="text-red-600 hover:text-red-900 transition-colors"
+                        >
+                          삭제
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">타입:</span>
-                <span className="font-medium">{room.roomType}</span>
+            {rooms.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                객실이 없습니다.
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">가격:</span>
-                <span className="font-medium">₩{room.price?.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">크기:</span>
-                <span>{room.size}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">수용인원:</span>
-                <span>{room.capacity}명</span>
-              </div>
-            </div>
-            
-            <div className="flex justify-end space-x-2 mt-4 pt-3 border-t">
-              <button
-                onClick={() => handleRowClick(room)}
-                className="text-blue-600 hover:text-blue-900 transition-colors text-sm"
-              >
-                수정
-              </button>
-              <button
-                onClick={() => handleDelete(room._id)}
-                className="text-red-600 hover:text-red-900 transition-colors text-sm"
-              >
-                삭제
-              </button>
-            </div>
+            )}
           </div>
-        ))}
-        
-        {rooms.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            객실이 없습니다.
+
+          {/* 객실 목록 - 모바일 카드 */}
+          <div className="lg:hidden space-y-4">
+            {rooms.map((room) => (
+              <div key={room._id} className="bg-white rounded-lg shadow-sm border p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">{room.name}</h3>
+                    <p className="text-sm text-gray-500">{room.description}</p>
+                  </div>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    room.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {room.isAvailable ? '예약 가능' : '예약 불가'}
+                  </span>
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">타입:</span>
+                    <span className="font-medium">{room.roomType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">가격:</span>
+                    <span className="font-medium">₩{room.price?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">크기:</span>
+                    <span>{room.size}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">수용인원:</span>
+                    <span>{room.capacity}명</span>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-2 mt-4 pt-3 border-t">
+                  <button
+                    onClick={() => handleRowClick(room)}
+                    className="text-blue-600 hover:text-blue-900 transition-colors text-sm"
+                  >
+                    수정
+                  </button>
+                  <button
+                    onClick={() => handleDelete(room._id)}
+                    className="text-red-600 hover:text-red-900 transition-colors text-sm"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </div>
+            ))}
+            
+            {rooms.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                객실이 없습니다.
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       {/* 수정 모달 */}
       {showModal && selectedRoom && (
