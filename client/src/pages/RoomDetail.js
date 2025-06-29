@@ -264,7 +264,7 @@ const calendarStyles = `
   @media (max-width: 767px) {
     .rdp {
       --rdp-cell-size: 35px;
-      margin: 0.5em;
+      margin: 0;
       font-size: 14px;
     }
     
@@ -291,7 +291,9 @@ const calendarStyles = `
     .calendar-container {
       overflow-x: hidden;
       width: 100%;
-      padding: 0.5rem;
+      padding: 0;
+      border: none;
+      box-shadow: none;
     }
     
     /* 모바일에서 예약 섹션 패딩 조정 */
