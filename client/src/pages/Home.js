@@ -526,7 +526,7 @@ const CebuResortBooking = () => {
           <h3 className="text-3xl font-bold text-center mb-12 text-gray-800">객실 예약</h3>
           
           {/* 예약 폼 */}
-          <div className="bg-gradient-to-r from-emerald-50 via-cyan-50 to-teal-50 rounded-2xl p-8 mb-12">
+          <div className="bg-gradient-to-r from-emerald-50 via-cyan-50 to-teal-50 rounded-2xl p-4 sm:p-8 mb-12">
             {/* 선택된 객실 정보 표시 */}
             {!selectedRoom && (
               <div className="mb-6 p-4 bg-white rounded-xl shadow-sm border-l-4 border-gray-300 text-gray-600 text-center">
@@ -535,18 +535,20 @@ const CebuResortBooking = () => {
             )}
             {selectedRoom && (
               <div className="mb-6 p-4 bg-white rounded-xl shadow-sm border-l-4 border-blue-500">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                {/* 모바일: 세로 배치, 데스크톱: 가로 배치 */}
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
                     <img 
                       src={selectedRoom.image} 
                       alt={selectedRoom.name}
-                      className="w-20 h-20 object-cover rounded-lg mb-2 sm:mb-0"
+                      className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg"
                     />
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 text-center sm:text-left">
                       <h4 className="font-bold text-gray-800 break-keep text-base sm:text-lg">{selectedRoom.name}</h4>
-                      <p className="text-sm text-gray-600 break-words line-clamp-2">{selectedRoom.description}</p>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 mt-1">
-                        <span>{selectedRoom.size}</span>
+                      {/* 모바일에서는 설명 숨김 */}
+                      <p className="hidden sm:block text-sm text-gray-600 break-words line-clamp-2">{selectedRoom.description}</p>
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-sm text-gray-500 mt-1">
+                        <span className="hidden sm:inline">{selectedRoom.size}</span>
                         <div className="flex items-center">
                           <Users className="w-4 h-4 mr-1" />
                           <span>{selectedRoom.capacity}명</span>
@@ -554,7 +556,7 @@ const CebuResortBooking = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="text-right min-w-[100px]">
+                  <div className="text-center lg:text-right min-w-[100px]">
                     <div className="text-xl sm:text-2xl font-bold text-blue-600">₩{selectedRoom.price.toLocaleString()}</div>
                     <div className="text-sm text-gray-500">1박 기준</div>
                   </div>
@@ -562,14 +564,15 @@ const CebuResortBooking = () => {
               </div>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* 모바일: 세로 배치, 데스크톱: 가로 배치 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">체크인</label>
                 <input
                   type="date"
                   value={checkIn}
                   onChange={(e) => setCheckIn(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                 />
               </div>
               <div>
@@ -578,7 +581,7 @@ const CebuResortBooking = () => {
                   type="date"
                   value={checkOut}
                   onChange={(e) => setCheckOut(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                 />
               </div>
               <div>
@@ -586,7 +589,7 @@ const CebuResortBooking = () => {
                 <select
                   value={guests}
                   onChange={(e) => setGuests(Number(e.target.value))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                 >
                   {[1,2,3,4,5,6].map(num => (
                     <option key={num} value={num}>{num}명</option>
@@ -596,7 +599,7 @@ const CebuResortBooking = () => {
               <div className="flex items-end">
                 <button
                   onClick={handleBooking}
-                  className="w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white py-3 px-6 rounded-xl hover:from-blue-700 hover:to-teal-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  className="w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white py-3 px-4 sm:px-6 rounded-xl hover:from-blue-700 hover:to-teal-700 transition-all duration-300 transform hover:scale-105 shadow-lg text-sm sm:text-base font-medium"
                 >
                   예약하기
                 </button>
