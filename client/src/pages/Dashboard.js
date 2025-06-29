@@ -506,9 +506,19 @@ const Dashboard = () => {
               )}
 
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                {/* 임시 비밀번호 사용자 안내 */}
+                {isTempPassword && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-blue-700 text-sm">
+                      <strong>안내:</strong> 임시 비밀번호로 로그인하신 경우, 
+                      "현재 비밀번호" 필드에 이메일로 받으신 임시 비밀번호를 입력해주세요.
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    현재 비밀번호
+                    {isTempPassword ? '임시 비밀번호' : '현재 비밀번호'}
                   </label>
                   <div className="relative">
                     <input
@@ -516,6 +526,7 @@ const Dashboard = () => {
                       value={passwordForm.currentPassword}
                       onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
                       className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder={isTempPassword ? "이메일로 받은 임시 비밀번호" : "현재 비밀번호"}
                       required
                     />
                     <button

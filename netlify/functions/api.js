@@ -709,9 +709,21 @@ async function handleUsers(httpMethod, pathSegments, body, headers, event) {
         };
       }
       
-      // 현재 비밀번호 확인
-      const isMatch = await user.comparePassword(currentPassword);
-      if (!isMatch) {
+      // 임시 비밀번호 확인
+      let isTempPassword = false;
+      if (user.tempPassword && user.tempPasswordExpires && user.tempPasswordExpires > new Date()) {
+        if (user.tempPassword === currentPassword) {
+          isTempPassword = true;
+        }
+      }
+      
+      // 일반 비밀번호 확인
+      let isMatch = false;
+      if (!isTempPassword) {
+        isMatch = await user.comparePassword(currentPassword);
+      }
+      
+      if (!isMatch && !isTempPassword) {
         return {
           statusCode: 400,
           headers,
@@ -719,14 +731,21 @@ async function handleUsers(httpMethod, pathSegments, body, headers, event) {
         };
       }
       
-      // 새 비밀번호 설정
+      // 새 비밀번호 설정 및 임시 비밀번호 초기화
       user.password = newPassword;
+      if (isTempPassword) {
+        user.tempPassword = null;
+        user.tempPasswordExpires = null;
+      }
       await user.save();
       
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ message: '비밀번호가 변경되었습니다.' })
+        body: JSON.stringify({ 
+          message: '비밀번호가 변경되었습니다.',
+          isTempPasswordReset: isTempPassword
+        })
       };
     } catch (error) {
       return {
