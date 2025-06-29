@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 
 // CORS 설정
 const corsHandler = cors({
@@ -81,6 +82,14 @@ const userSchema = new mongoose.Schema({
   isAdmin: {
     type: Boolean,
     default: false
+  },
+  tempPassword: {
+    type: String,
+    default: null
+  },
+  tempPasswordExpires: {
+    type: Date,
+    default: null
   },
   createdAt: {
     type: Date,
@@ -367,6 +376,99 @@ const verifyAdmin = async (token) => {
   }
 };
 
+// 임시 비밀번호 생성 함수
+const generateTempPassword = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 12; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+// 이메일 발송 함수
+const sendEmail = async (to, subject, html) => {
+  try {
+    // Gmail SMTP 설정 (환경변수에서 가져오기)
+    const transporter = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS // Gmail 앱 비밀번호 사용
+      }
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: to,
+      subject: subject,
+      html: html
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('이메일 발송 성공:', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('이메일 발송 실패:', error);
+    throw error;
+  }
+};
+
+// 비밀번호 찾기 이메일 템플릿
+const createPasswordResetEmail = (username, tempPassword) => {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">Cebu Stays</h1>
+        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">비밀번호 재설정</p>
+      </div>
+      
+      <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #333; margin-bottom: 20px;">안녕하세요, ${username}님!</h2>
+        
+        <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+          비밀번호 찾기 요청이 접수되었습니다. 아래의 임시 비밀번호를 사용하여 로그인하신 후, 
+          새로운 비밀번호로 변경해주세요.
+        </p>
+        
+        <div style="background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+          <p style="margin: 0 0 10px 0; color: #495057; font-weight: bold;">임시 비밀번호</p>
+          <p style="margin: 0; font-size: 18px; font-weight: bold; color: #007bff; letter-spacing: 2px; font-family: monospace;">
+            ${tempPassword}
+          </p>
+        </div>
+        
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #856404; font-size: 14px;">
+            ⚠️ <strong>보안 주의사항:</strong><br>
+            • 이 임시 비밀번호는 1시간 후 만료됩니다.<br>
+            • 로그인 후 반드시 새로운 비밀번호로 변경해주세요.<br>
+            • 이 이메일을 다른 사람과 공유하지 마세요.
+          </p>
+        </div>
+        
+        <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+          로그인 후에는 <strong>마이페이지</strong>에서 새로운 비밀번호로 변경하실 수 있습니다.
+        </p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login" 
+             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold;">
+            로그인하기
+          </a>
+        </div>
+        
+        <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
+        
+        <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+          이 이메일은 Cebu Stays 예약 시스템에서 발송되었습니다.<br>
+          문의사항이 있으시면 고객센터로 연락해주세요.
+        </p>
+      </div>
+    </div>
+  `;
+};
+
 // 사용자 관련 핸들러
 async function handleUsers(httpMethod, pathSegments, body, headers, event) {
   // 안전한 JSON 파싱
@@ -456,8 +558,21 @@ async function handleUsers(httpMethod, pathSegments, body, headers, event) {
       };
     }
     
-    const isMatch = await user.comparePassword(password.toString());
-    if (!isMatch) {
+    // 임시 비밀번호 확인
+    let isTempPassword = false;
+    if (user.tempPassword && user.tempPasswordExpires && user.tempPasswordExpires > new Date()) {
+      if (user.tempPassword === password) {
+        isTempPassword = true;
+      }
+    }
+    
+    // 일반 비밀번호 확인
+    let isMatch = false;
+    if (!isTempPassword) {
+      isMatch = await user.comparePassword(password.toString());
+    }
+    
+    if (!isMatch && !isTempPassword) {
       return {
         statusCode: 400,
         headers,
@@ -470,14 +585,15 @@ async function handleUsers(httpMethod, pathSegments, body, headers, event) {
     });
     
     const responseData = { 
-      message: '로그인 성공', 
+      message: isTempPassword ? '임시 비밀번호로 로그인되었습니다. 새 비밀번호로 변경해주세요.' : '로그인 성공', 
       user: { 
         id: user._id, 
         username: user.username, 
         email: user.email,
         isAdmin: user.isAdmin 
       },
-      token
+      token,
+      isTempPassword
     };
     
     return {
@@ -617,6 +733,121 @@ async function handleUsers(httpMethod, pathSegments, body, headers, event) {
         statusCode: 401,
         headers,
         body: JSON.stringify({ message: '유효하지 않은 토큰입니다.' })
+      };
+    }
+  } else if (httpMethod === 'POST' && pathSegments[1] === 'forgot-password') {
+    // POST /api/users/forgot-password - 비밀번호 찾기
+    const { email } = parsedBody;
+    
+    if (!email) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: '이메일을 입력해주세요.' })
+      };
+    }
+    
+    try {
+      // 사용자 조회
+      const user = await User.findOne({ email: email.toLowerCase() });
+      if (!user) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '해당 이메일로 등록된 사용자를 찾을 수 없습니다.' })
+        };
+      }
+      
+      // 임시 비밀번호 생성
+      const tempPassword = generateTempPassword();
+      const tempPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1시간 후 만료
+      
+      // 사용자 정보 업데이트
+      user.tempPassword = tempPassword;
+      user.tempPasswordExpires = tempPasswordExpires;
+      await user.save();
+      
+      // 이메일 발송
+      const emailHtml = createPasswordResetEmail(user.username, tempPassword);
+      await sendEmail(
+        user.email,
+        '[Cebu Stays] 비밀번호 재설정 - 임시 비밀번호 발송',
+        emailHtml
+      );
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ 
+          message: '임시 비밀번호가 이메일로 발송되었습니다. 이메일을 확인해주세요.' 
+        })
+      };
+    } catch (error) {
+      console.error('비밀번호 찾기 오류:', error);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ message: '이메일 발송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' })
+      };
+    }
+  } else if (httpMethod === 'POST' && pathSegments[1] === 'reset-password') {
+    // POST /api/users/reset-password - 임시 비밀번호로 로그인 후 새 비밀번호 설정
+    const { email, tempPassword, newPassword } = parsedBody;
+    
+    if (!email || !tempPassword || !newPassword) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: '모든 필드를 입력해주세요.' })
+      };
+    }
+    
+    try {
+      // 사용자 조회
+      const user = await User.findOne({ email: email.toLowerCase() });
+      if (!user) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ message: '사용자를 찾을 수 없습니다.' })
+        };
+      }
+      
+      // 임시 비밀번호 확인
+      if (user.tempPassword !== tempPassword) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ message: '임시 비밀번호가 일치하지 않습니다.' })
+        };
+      }
+      
+      // 임시 비밀번호 만료 확인
+      if (user.tempPasswordExpires < new Date()) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ message: '임시 비밀번호가 만료되었습니다. 다시 요청해주세요.' })
+        };
+      }
+      
+      // 새 비밀번호 설정 및 임시 비밀번호 초기화
+      user.password = newPassword;
+      user.tempPassword = null;
+      user.tempPasswordExpires = null;
+      await user.save();
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ message: '비밀번호가 성공적으로 재설정되었습니다.' })
+      };
+    } catch (error) {
+      console.error('비밀번호 재설정 오류:', error);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ message: '비밀번호 재설정 중 오류가 발생했습니다.' })
       };
     }
   }

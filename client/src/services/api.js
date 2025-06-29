@@ -364,4 +364,7 @@ export const getRoomBookings = async (roomId) => {
   }
 };
 
+// api 인스턴스를 named export로도 제공
+export { api };
+
 export default api; 

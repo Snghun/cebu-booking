@@ -177,12 +177,12 @@ const Login = () => {
 
           {/* 비밀번호 찾기 링크 */}
           <div className="mt-4 text-center">
-            <button 
-              type="button"
+            <Link 
+              to="/forgot-password"
               className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
               비밀번호를 잊으셨나요?
-            </button>
+            </Link>
           </div>
         </div>
 

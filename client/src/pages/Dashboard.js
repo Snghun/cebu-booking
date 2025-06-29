@@ -19,7 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import { getUserBookings, updateUserProfile, changeUserPassword } from '../services/api';
 
 const Dashboard = () => {
-  const { user, logout, isAuthenticated, updateUser } = useAuth();
+  const { user, logout, isAuthenticated, updateUser, isTempPassword, clearTempPassword } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -120,6 +120,12 @@ const Dashboard = () => {
     try {
       await changeUserPassword(passwordForm.currentPassword, passwordForm.newPassword);
       setPasswordSuccess('비밀번호가 성공적으로 변경되었습니다.');
+      
+      // 임시 비밀번호 플래그 제거
+      if (isTempPassword) {
+        clearTempPassword();
+      }
+      
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
@@ -227,6 +233,31 @@ const Dashboard = () => {
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* 임시 비밀번호 알림 */}
+        {isTempPassword && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-yellow-800 text-sm font-medium mb-1">임시 비밀번호로 로그인되었습니다</p>
+              <p className="text-yellow-700 text-sm mb-3">
+                보안을 위해 새로운 비밀번호로 변경해주세요.
+              </p>
+              <button
+                onClick={() => setShowPasswordModal(true)}
+                className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-yellow-700 transition-colors"
+              >
+                비밀번호 변경하기
+              </button>
+            </div>
+            <button
+              onClick={clearTempPassword}
+              className="text-yellow-500 hover:text-yellow-700 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">대시보드</h2>
           <p className="text-gray-600">예약 현황을 확인하고 관리하세요</p>

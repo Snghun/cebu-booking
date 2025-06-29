@@ -37,7 +37,14 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 
 # Netlify Functions URL (로컬 개발용)
 REACT_APP_API_URL=http://localhost:8888/.netlify/functions/api
+
+# 이메일 설정 (비밀번호 찾기 기능용)
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-gmail-app-password
+FRONTEND_URL=http://localhost:3000
 ```
+
+**참고**: 비밀번호 찾기 기능을 사용하려면 Gmail 앱 비밀번호 설정이 필요합니다. 자세한 설정 방법은 [PASSWORD_RESET_SETUP.md](./PASSWORD_RESET_SETUP.md)를 참조하세요.
 
 ### 3. MongoDB 실행
 
@@ -86,6 +93,8 @@ booking/
 - ✅ 회원가입/로그인
 - ✅ JWT 기반 인증
 - ✅ 사용자 프로필 관리
+- ✅ 비밀번호 찾기 (이메일 임시 비밀번호 발송)
+- ✅ 비밀번호 재설정
 
 ### 객실 관리
 - ✅ 객실 목록 조회
@@ -97,6 +106,8 @@ booking/
 ### 인증
 - `POST /api/users/register` - 회원가입
 - `POST /api/users/login` - 로그인
+- `POST /api/users/forgot-password` - 비밀번호 찾기 (임시 비밀번호 발송)
+- `POST /api/users/reset-password` - 비밀번호 재설정
 
 ### 예약
 - `GET /api/bookings` - 예약 목록 조회
