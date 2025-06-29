@@ -263,25 +263,19 @@ const calendarStyles = `
   /* 모바일 최적화를 위한 추가 스타일 */
   @media (max-width: 767px) {
     .rdp {
-      --rdp-cell-size: 32px;
+      --rdp-cell-size: 35px;
       margin: 0.5em;
-      font-size: 13px;
-      width: 100%;
-      max-width: 100%;
+      font-size: 14px;
     }
     
     .rdp-table {
       width: 100%;
       min-width: 100%;
-      max-width: 100%;
-      table-layout: fixed;
     }
     
     .rdp-head_cell {
       padding: 4px 0;
       font-size: 12px;
-      width: 14.28%;
-      text-align: center;
     }
     
     .rdp-nav_button {
@@ -292,71 +286,17 @@ const calendarStyles = `
     .rdp-caption {
       padding: 4px 0;
       font-size: 14px;
-      text-align: center;
     }
     
     .calendar-container {
       overflow-x: hidden;
       width: 100%;
-      max-width: 100%;
       padding: 0.5rem;
-    }
-    
-    /* 모바일에서 달력 전체 너비 조정 */
-    .rdp {
-      width: 100%;
-      max-width: 100%;
-    }
-    
-    /* 모바일에서 셀 크기 조정 */
-    .rdp-day {
-      width: 32px;
-      height: 32px;
-      font-size: 13px;
-      max-width: 14.28%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
     
     /* 모바일에서 예약 섹션 패딩 조정 */
     .booking-section {
       padding: 1rem;
-    }
-    
-    /* 모바일에서 달력 셀 간격 조정 */
-    .rdp-tbody {
-      width: 100%;
-    }
-    
-    .rdp-tbody td {
-      width: 14.28%;
-      padding: 2px;
-      text-align: center;
-    }
-    
-    /* 모바일에서 달력 네비게이션 중앙 정렬 */
-    .rdp-nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      margin-bottom: 0.5em;
-    }
-    
-    /* 모바일에서 달력 캡션 중앙 정렬 */
-    .rdp-caption_label {
-      text-align: center;
-      width: 100%;
-    }
-    
-    /* 모바일에서 달력 버튼 크기 조정 */
-    .rdp-day_button {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
   }
 `;
