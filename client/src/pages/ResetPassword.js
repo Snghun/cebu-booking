@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Waves, Lock, ArrowLeft, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
 
 const ResetPassword = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     email: searchParams.get('email') || '',

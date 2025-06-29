@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Waves, Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
 
 const ForgotPassword = () => {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -29,7 +28,7 @@ const ForgotPassword = () => {
     }
 
     try {
-      const response = await api.post('/users/forgot-password', { email: email.trim().toLowerCase() });
+      await api.post('/users/forgot-password', { email: email.trim().toLowerCase() });
       setSuccess(true);
     } catch (error) {
       const errorMessage = error.response?.data?.message || '비밀번호 찾기 요청에 실패했습니다.';
