@@ -5,71 +5,194 @@ import {
   Star, 
   Waves,
   MapPin,
-  Waves as WavesIcon,
   Phone,
   Mail,
-  Clock,
-  Car,
   ArrowLeft
 } from 'lucide-react';
 import { getRoom, getRoomBookings, createBooking } from '../services/api';
 import { useSwipeable } from 'react-swipeable';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
+import { DayPicker } from 'react-day-picker';
+import { format, addDays } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import 'react-day-picker/dist/style.css';
 
 // 달력 스타일 오버라이드
 const calendarStyles = `
-  .react-calendar {
-    width: 100%;
-    border: none;
-    font-family: inherit;
+  .rdp {
+    --rdp-cell-size: 40px;
+    --rdp-accent-color: #1e40af;
+    --rdp-background-color: #dbeafe;
+    --rdp-accent-color-dark: #1e3a8a;
+    --rdp-background-color-dark: #1e3a8a;
+    --rdp-outline: 2px solid var(--rdp-accent-color);
+    --rdp-outline-selected: 2px solid rgba(0, 0, 0, 0.75);
+    margin: 1em;
   }
   
-  .react-calendar__tile {
+  .rdp-day_selected,
+  .rdp-day_range_start,
+  .rdp-day_range_end {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    font-weight: 400 !important;
+    border-radius: 6px !important;
+  }
+  
+  .rdp-day_range_middle {
+    background-color: #dbeafe;
+    border-radius: 0;
+  }
+  
+  .rdp-day_booked {
+    background-color: #fecaca;
+    color: #dc2626;
+    font-weight: 600;
+    border-radius: 6px;
+    position: relative;
+  }
+  
+  .rdp-day_booked:hover {
+    background-color: #fca5a5;
+  }
+  
+  .rdp-day_booked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    background-color: #dc2626;
+    border-radius: 50%;
+  }
+  
+  .rdp-day_today {
+    font-weight: bold;
+    color: #1e40af;
+    border: 2px solid #1e40af;
+    border-radius: 6px;
+  }
+  
+  .rdp-day:not(.rdp-day_disabled):not(.rdp-day_selected):not(.rdp-day_booked):hover {
+    background-color: #eff6ff;
+    border-radius: 6px;
+  }
+  
+  .rdp-day_disabled {
+    color: #9ca3af;
+    background-color: #f3f4f6;
+    border-radius: 6px;
+  }
+  
+  .rdp-head_cell {
+    font-weight: 600;
+    color: #374151;
+    padding: 8px 0;
+  }
+  
+  .rdp-nav_button {
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    color: #374151;
     padding: 8px;
-    background: none;
-    border: none;
-    border-radius: 4px;
-    font-size: 14px;
     transition: all 0.2s;
   }
   
-  .react-calendar__tile:enabled:hover {
-    background-color: #e3f2fd;
+  .rdp-nav_button:hover {
+    background-color: #f3f4f6;
+    border-color: #9ca3af;
   }
   
-  .react-calendar__tile--active {
-    background: #1976d2 !important;
-    color: white;
-  }
-  
-  .react-calendar__tile--now {
-    background: #fff3e0;
-    color: #f57c00;
-  }
-  
-  .react-calendar__navigation button {
-    background: none;
-    border: none;
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: 500;
-  }
-  
-  .react-calendar__navigation button:enabled:hover {
-    background-color: #f5f5f5;
-  }
-  
-  .react-calendar__month-view__weekdays {
+  .rdp-caption {
     font-weight: 600;
-    font-size: 12px;
-    text-transform: uppercase;
-    color: #666;
+    color: #111827;
+    padding: 8px 0;
   }
   
-  .react-calendar__month-view__weekdays__weekday {
-    padding: 8px;
+  /* 선택된 구간 음영 처리 */
+  .rdp-day[data-selected="true"] {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    font-weight: 400 !important;
+  }
+  
+  /* 체크인과 체크아웃 사이 날짜들 음영 처리 */
+  .rdp-day[data-range="true"] {
+    background-color: #dbeafe !important;
+    color: #1e293b !important;
+  }
+  
+  /* 체크인과 체크아웃 날짜 완전 통일 */
+  .rdp-day_selected,
+  .rdp-day_range_start,
+  .rdp-day_range_end {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    font-weight: 400 !important;
+    border-radius: 6px !important;
+  }
+  
+  /* 선택된 날짜의 파란 동그라미 제거 */
+  .rdp-day_selected::after,
+  .rdp-day_range_start::after,
+  .rdp-day_range_end::after {
+    display: none !important;
+  }
+  
+  /* 모든 선택된 날짜의 가상 요소 제거 */
+  .rdp-day[aria-selected="true"]::after,
+  .rdp-day[data-selected="true"]::after {
+    display: none !important;
+  }
+  
+  /* 더 구체적인 선택자로 파란 동그라미 제거 */
+  .rdp-day.rdp-day_selected::after,
+  .rdp-day.rdp-day_range_start::after,
+  .rdp-day.rdp-day_range_end::after {
+    display: none !important;
+    content: none !important;
+  }
+  
+  /* 모든 가상 요소 제거 */
+  .rdp-day::after,
+  .rdp-day::before {
+    display: none !important;
+    content: none !important;
+  }
+  
+  /* 선택된 날짜의 모든 가상 요소 제거 */
+  .rdp-day[aria-selected="true"]::after,
+  .rdp-day[aria-selected="true"]::before,
+  .rdp-day[data-selected="true"]::after,
+  .rdp-day[data-selected="true"]::before {
+    display: none !important;
+    content: none !important;
+  }
+  
+  /* rdp-day_button의 border-radius 제거 */
+  .rdp-day_button {
+    border-radius: 0 !important;
+  }
+  
+  /* 선택된 날짜의 버튼 border-radius 제거 */
+  .rdp-day_selected .rdp-day_button,
+  .rdp-day_range_start .rdp-day_button,
+  .rdp-day_range_end .rdp-day_button {
+    border-radius: 0 !important;
+  }
+  
+  /* 선택된 날짜의 border 제거 */
+  .rdp-selected .rdp-day_button {
+    border: none !important;
+  }
+  
+  /* 모든 선택된 날짜의 border 제거 */
+  .rdp-day_selected .rdp-day_button,
+  .rdp-day_range_start .rdp-day_button,
+  .rdp-day_range_end .rdp-day_button {
+    border: none !important;
   }
 `;
 
@@ -127,7 +250,6 @@ const RoomDetail = () => {
         setRoomBookings(bookings);
       } catch (error) {
         console.error('룸 예약 정보 조회 오류:', error);
-        // 예약 정보 조회 실패는 치명적이지 않으므로 에러 상태로 설정하지 않음
       } finally {
         setBookingsLoading(false);
       }
@@ -167,7 +289,6 @@ const RoomDetail = () => {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     
     if (!token || !user) {
-      // 로그인되지 않은 상태
       alert('예약을 위해 로그인이 필요합니다.\n로그인 페이지로 이동합니다.');
       navigate('/login');
       return;
@@ -187,8 +308,15 @@ const RoomDetail = () => {
 
   const calculateNights = () => {
     if (!selectedDate.checkIn || !selectedDate.checkOut) return 0;
+    
     const start = new Date(selectedDate.checkIn);
     const end = new Date(selectedDate.checkOut);
+    
+    // 유효하지 않은 날짜인 경우 0 반환
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return 0;
+    }
+    
     const diffTime = Math.abs(end - start);
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
@@ -205,6 +333,11 @@ const RoomDetail = () => {
       const checkIn = new Date(booking.checkIn);
       const checkOut = new Date(booking.checkOut);
       
+      // 유효하지 않은 날짜는 건너뛰기
+      if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+        return;
+      }
+      
       // 체크인부터 체크아웃까지 모든 날짜를 추가 (체크아웃 날짜 포함)
       const currentDate = new Date(checkIn);
       while (currentDate <= checkOut) {
@@ -213,112 +346,6 @@ const RoomDetail = () => {
       }
     });
     return bookedDates;
-  };
-
-  // 달력에서 날짜 타일 렌더링 함수
-  const tileClassName = ({ date, view }) => {
-    if (view !== 'month') return null;
-    
-    const bookedDates = getBookedDates();
-    const isBooked = bookedDates.some(bookedDate => 
-      bookedDate.toDateString() === date.toDateString()
-    );
-    
-    if (isBooked) {
-      return 'bg-gray-300 text-gray-600 font-medium';
-    }
-    
-    // 선택된 기간 음영처리
-    if (selectedDate.checkIn && selectedDate.checkOut) {
-      const checkInDate = new Date(selectedDate.checkIn);
-      const checkOutDate = new Date(selectedDate.checkOut);
-      const currentDate = new Date(date);
-      
-      if (currentDate >= checkInDate && currentDate <= checkOutDate) {
-        return 'bg-blue-200 text-blue-800 font-medium';
-      }
-    }
-    
-    // 예약 가능한 날짜는 회색 배경으로 표시
-    return 'bg-gray-100 text-gray-700';
-  };
-
-  // 달력에서 날짜 클릭 비활성화
-  const tileDisabled = ({ date, view }) => {
-    if (view !== 'month') return false;
-    
-    const bookedDates = getBookedDates();
-    return bookedDates.some(bookedDate => 
-      bookedDate.toDateString() === date.toDateString()
-    );
-  };
-
-  // 달력에서 날짜 클릭 처리
-  const handleDateClick = (date) => {
-    const clickedDate = date.getFullYear() + '-' + 
-                       String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-                       String(date.getDate()).padStart(2, '0');
-    
-    // 예약된 날짜인지 확인 (체크아웃 날짜까지 포함)
-    const bookedDates = getBookedDates();
-    const isBooked = bookedDates.some(bookedDate => 
-      bookedDate.toDateString() === date.toDateString()
-    );
-    
-    if (isBooked) {
-      return; // 예약된 날짜는 클릭 불가
-    }
-    
-    // 체크인과 체크아웃이 모두 선택된 상태라면 초기화
-    if (selectedDate.checkIn && selectedDate.checkOut) {
-      setSelectedDate({
-        checkIn: clickedDate,
-        checkOut: '',
-        guests: selectedDate.guests
-      });
-      return;
-    }
-    
-    // 체크인이 선택되지 않은 경우
-    if (!selectedDate.checkIn) {
-      setSelectedDate({
-        ...selectedDate,
-        checkIn: clickedDate
-      });
-    }
-    // 체크인은 선택되었지만 체크아웃이 선택되지 않은 경우
-    else if (!selectedDate.checkOut) {
-      const checkInDate = new Date(selectedDate.checkIn);
-      const checkOutDate = new Date(clickedDate);
-      
-      // 체크아웃이 체크인보다 이전이거나 같은 경우, 새로운 날짜를 체크인으로 설정
-      if (checkOutDate <= checkInDate) {
-        setSelectedDate({
-          ...selectedDate,
-          checkIn: clickedDate,
-          checkOut: ''
-        });
-        return;
-      }
-      
-      // 체크아웃 날짜가 예약된 기간과 겹치는지 확인
-      const isCheckOutDateConflict = roomBookings.some(booking => {
-        const existingCheckIn = new Date(booking.checkIn);
-        const existingCheckOut = new Date(booking.checkOut);
-        
-        return checkOutDate >= existingCheckIn && checkOutDate <= existingCheckOut;
-      });
-      
-      if (isCheckOutDateConflict) {
-        alert('선택하신 체크아웃 날짜는 이미 예약된 기간입니다.');
-        return;
-      }
-      
-      setSelectedDate({
-        ...selectedDate,
-        checkOut: clickedDate
-      });
-    }
   };
 
   const handlers = useSwipeable({
@@ -358,30 +385,37 @@ const RoomDetail = () => {
     const checkInDate = new Date(selectedDate.checkIn);
     const checkOutDate = new Date(selectedDate.checkOut);
     
+    // 유효하지 않은 날짜인 경우 오류 처리
+    if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+      alert('유효하지 않은 날짜입니다. 다시 선택해주세요.');
+      return;
+    }
+    
     const isDateConflict = roomBookings.some(booking => {
       const existingCheckIn = new Date(booking.checkIn);
       const existingCheckOut = new Date(booking.checkOut);
       
-      // 새로운 예약의 체크인/체크아웃이 기존 예약 기간과 겹치는지 확인
-      // 체크아웃 날짜도 포함하여 검사 (체크아웃 당일에도 새로운 체크인이 불가능)
+      // 유효하지 않은 기존 예약 날짜는 건너뛰기
+      if (isNaN(existingCheckIn.getTime()) || isNaN(existingCheckOut.getTime())) {
+        return false;
+      }
+      
       return (
-        (checkInDate >= existingCheckIn && checkInDate <= existingCheckOut) || // 새로운 체크인이 기존 예약 기간 내
-        (checkOutDate >= existingCheckIn && checkOutDate <= existingCheckOut) || // 새로운 체크아웃이 기존 예약 기간 내
-        (checkInDate <= existingCheckIn && checkOutDate >= existingCheckOut) // 새로운 예약이 기존 예약을 완전히 포함
+        (checkInDate >= existingCheckIn && checkInDate <= existingCheckOut) ||
+        (checkOutDate >= existingCheckIn && checkOutDate <= existingCheckOut) ||
+        (checkInDate <= existingCheckIn && checkOutDate >= existingCheckOut)
       );
     });
     
     if (isDateConflict) {
       alert('선택하신 날짜에 이미 예약이 있습니다.\n다른 날짜를 선택해주세요.');
       
-      // 날짜 초기화
       setSelectedDate({
         checkIn: '',
         checkOut: '',
         guests: 2
       });
       
-      // 모달 닫기
       setShowBookingForm(false);
       return;
     }
@@ -404,7 +438,6 @@ const RoomDetail = () => {
       
       alert('예약이 성공적으로 완료되었습니다!\n예약 내역을 확인하시겠습니까?');
       
-      // 폼 초기화 및 모달 닫기
       setShowBookingForm(false);
       setBookingForm({
         guestName: '',
@@ -413,25 +446,21 @@ const RoomDetail = () => {
         specialRequests: ''
       });
       
-      // 날짜 초기화
       setSelectedDate({
         checkIn: '',
         checkOut: '',
         guests: 2
       });
       
-      // 예약 목록 새로고침
       const updatedBookings = await getRoomBookings(room._id);
       setRoomBookings(updatedBookings);
       
-      // 예약자 대시보드로 이동
       navigate('/dashboard');
       
     } catch (error) {
       console.error('예약 생성 실패:', error);
       const errorMessage = error.response?.data?.message || '예약 생성에 실패했습니다.';
       
-      // JWT 토큰 만료 또는 인증 오류인 경우
       if (error.response?.status === 401 || errorMessage.includes('jwt expired') || errorMessage.includes('jwt')) {
         alert('로그인 세션이 만료되었습니다.\n다시 로그인해주세요.');
         localStorage.removeItem('token');
@@ -489,6 +518,7 @@ const RoomDetail = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50">
       <style>{calendarStyles}</style>
+      
       {/* Header */}
       <header className="bg-white shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -560,18 +590,17 @@ const RoomDetail = () => {
           {/* 객실 정보 */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+              {/* 객실 기본 정보 */}
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
                 <div className="flex-1 min-w-0">
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 break-keep">{room.name}</h1>
                   <p className="text-gray-600 text-base sm:text-lg mb-4 break-words line-clamp-2">{room.description}</p>
-                  <div className="flex flex-nowrap items-center gap-x-3 gap-y-1 text-sm text-gray-500 overflow-x-auto min-w-0">
-                    <span className="whitespace-nowrap min-w-0 overflow-hidden text-ellipsis">{room.size}</span>
-                    <span className="hidden sm:inline">|</span>
-                    <div className="flex items-center whitespace-nowrap min-w-0 overflow-hidden text-ellipsis">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+                    <span className="whitespace-nowrap">{room.size}</span>
+                    <div className="flex items-center whitespace-nowrap">
                       <Users className="w-4 h-4 mr-1 flex-shrink-0" />
                       <span>최대 {room.capacity}명</span>
                     </div>
-                    <span className="hidden sm:inline">|</span>
                     <div className="flex items-center flex-shrink-0">
                       {[...Array(5)].map((_, i) => (
                         <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
@@ -588,191 +617,330 @@ const RoomDetail = () => {
               {/* 객실 상세 설명 */}
               {room.detailedDescription && (
                 <div className="mb-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">객실 소개</h3>
-                  <p className="text-gray-700 leading-relaxed">{room.detailedDescription}</p>
-                </div>
-              )}
-
-              {/* 편의시설 */}
-              {room.amenities && room.amenities.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">편의시설</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {room.amenities.map((amenity, index) => (
-                      <div key={index} className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="text-gray-700">{amenity}</span>
-                      </div>
-                    ))}
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">객실 소개</h3>
+                  <div className="prose prose-gray max-w-none">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-line text-base">{room.detailedDescription}</p>
                   </div>
                 </div>
               )}
 
               {/* 객실 특징 */}
               {room.features && room.features.length > 0 && (
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">객실 특징</h3>
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">객실 특징</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {room.features.map((feature, index) => (
-                      <div key={index} className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg">
-                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">{index + 1}</span>
-                        </div>
-                        <span className="text-gray-700 font-medium">{feature}</span>
+                      <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-gray-700">{feature}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-            </div>
-          </div>
 
-          {/* 예약 사이드바 */}
-          <div className="lg:col-span-1">
-            {/* 예약 현황 달력 */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">예약 현황</h3>
-              {bookingsLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : (
-                <div className="calendar-container">
-                  <Calendar
-                    tileClassName={tileClassName}
-                    tileDisabled={tileDisabled}
-                    className="w-full border-0"
-                    formatDay={(locale, date) => date.getDate()}
-                    showNeighboringMonth={false}
-                    minDate={new Date()}
-                    onClickDay={handleDateClick}
-                    locale="ko-KR"
-                  />
-                  <div className="mt-4 text-sm text-gray-600">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <div className="w-4 h-4 bg-gray-300 rounded"></div>
-                      <span>예약된 날짜</span>
-                    </div>
-
-
+              {/* 편의시설 */}
+              {room.amenities && room.amenities.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">편의시설</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {room.amenities.map((amenity, index) => (
+                      <div key={index} className="flex items-center space-x-2 text-gray-700">
+                        <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-sm">{amenity}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
-            </div>
 
-            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">예약하기</h3>
-              
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">체크인</label>
-                  <input
-                    type="date"
-                    value={selectedDate.checkIn}
-                    onChange={(e) => setSelectedDate({...selectedDate, checkIn: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">체크아웃</label>
-                  <input
-                    type="date"
-                    value={selectedDate.checkOut}
-                    onChange={(e) => setSelectedDate({...selectedDate, checkOut: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">투숙객</label>
-                  <select
-                    value={selectedDate.guests}
-                    onChange={(e) => setSelectedDate({...selectedDate, guests: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    {[1, 2, 3, 4, 5, 6].map(num => (
-                      <option key={num} value={num}>{num}명</option>
+              {/* 객실 규칙 */}
+              {room.houseRules && room.houseRules.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">객실 규칙</h3>
+                  <div className="space-y-3">
+                    {room.houseRules.map((rule, index) => (
+                      <div key={index} className="flex items-start space-x-3 p-3 bg-red-50 rounded-lg">
+                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span className="text-gray-700 text-sm">{rule}</span>
+                      </div>
                     ))}
-                  </select>
+                  </div>
+                </div>
+              )}
+
+              {/* 체크인/체크아웃 정보 */}
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4">체크인/체크아웃</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                    <h4 className="font-semibold text-blue-800 mb-2 text-lg">체크인</h4>
+                    <p className="text-blue-700 font-medium text-lg">오후 3:00</p>
+                    <p className="text-blue-600 text-sm mt-2">체크인 시간 이후에 객실 이용 가능합니다.</p>
+                  </div>
+                  <div className="bg-red-50 p-6 rounded-xl border border-red-200">
+                    <h4 className="font-semibold text-red-800 mb-2 text-lg">체크아웃</h4>
+                    <p className="text-red-700 font-medium text-lg">오전 11:00</p>
+                    <p className="text-red-600 text-sm mt-2">체크아웃 시간까지 객실 이용 가능합니다.</p>
+                  </div>
                 </div>
               </div>
 
-              {/* 가격 계산 */}
-              {selectedDate.checkIn && selectedDate.checkOut && (
-                <div className="border-t border-gray-200 pt-4 mb-6">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">1박 기준</span>
-                      <span className="font-medium">₩{room.price.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">숙박 일수</span>
-                      <span className="font-medium">{calculateNights()}박</span>
-                    </div>
-                    <div className="border-t border-gray-200 pt-2">
-                      <div className="flex justify-between">
-                        <span className="text-lg font-bold text-gray-900">총 가격</span>
-                        <span className="text-lg font-bold text-blue-600">₩{calculateTotalPrice().toLocaleString()}</span>
+              {/* 위치 정보 */}
+              {room.location && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">위치</h3>
+                  <div className="bg-gray-50 p-6 rounded-xl">
+                    <div className="flex items-start space-x-4">
+                      <MapPin className="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="text-gray-800 font-semibold text-lg mb-2">{room.location.name}</p>
+                        {room.location.address && (
+                          <p className="text-gray-600 mb-2">{room.location.address}</p>
+                        )}
+                        {room.location.description && (
+                          <p className="text-gray-600 text-sm leading-relaxed">{room.location.description}</p>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
               )}
 
+              {/* 연락처 정보 */}
+              <div className="border-t border-gray-200 pt-8">
+                <h3 className="text-xl font-semibold text-gray-800 mb-6">연락처</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                    <Phone className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-gray-800 font-semibold">전화번호</p>
+                      <p className="text-gray-600">+82-10-1234-5678</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                    <Mail className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-gray-800 font-semibold">이메일</p>
+                      <p className="text-gray-600">info@cebustays.com</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 예약 섹션 */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">예약하기</h2>
+              
+              {/* 날짜 선택 */}
+              <div className="mb-6">
+                {bookingsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-500">예약 현황을 불러오는 중...</p>
+                  </div>
+                ) : (
+                  <div className="calendar-container bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                    <DayPicker
+                      mode="single"
+                      selected={selectedDate.checkIn ? new Date(selectedDate.checkIn) : undefined}
+                      onSelect={(day) => {
+                        if (!day) return;
+                        
+                        const clickedDate = format(day, 'yyyy-MM-dd');
+                        const clickedDateTime = day.getTime();
+                        
+                        // 예약된 날짜인지 확인
+                        const bookedDates = getBookedDates();
+                        const isBooked = bookedDates.some(bookedDate => 
+                          format(bookedDate, 'yyyy-MM-dd') === clickedDate
+                        );
+                        
+                        if (isBooked) {
+                          return; // 예약된 날짜는 클릭 불가
+                        }
+                        
+                        // 체크인과 체크아웃이 모두 선택된 상태라면 초기화
+                        if (selectedDate.checkIn && selectedDate.checkOut) {
+                          setSelectedDate({
+                            checkIn: clickedDate,
+                            checkOut: '',
+                            guests: selectedDate.guests
+                          });
+                          return;
+                        }
+                        
+                        // 체크인이 선택되지 않은 경우
+                        if (!selectedDate.checkIn) {
+                          setSelectedDate({
+                            ...selectedDate,
+                            checkIn: clickedDate
+                          });
+                        }
+                        // 체크인은 선택되었지만 체크아웃이 선택되지 않은 경우
+                        else if (!selectedDate.checkOut) {
+                          const checkInDate = new Date(selectedDate.checkIn);
+                          
+                          // 클릭한 날짜가 체크인보다 이전이거나 같은 경우, 새로운 체크인으로 설정
+                          if (clickedDateTime <= checkInDate.getTime()) {
+                            setSelectedDate({
+                              ...selectedDate,
+                              checkIn: clickedDate,
+                              checkOut: ''
+                            });
+                            return;
+                          }
+                          
+                          // 체크아웃 날짜가 예약된 기간과 겹치는지 확인
+                          const isCheckOutDateConflict = roomBookings.some(booking => {
+                            const existingCheckIn = new Date(booking.checkIn);
+                            const existingCheckOut = new Date(booking.checkOut);
+                            
+                            // 유효하지 않은 기존 예약 날짜는 건너뛰기
+                            if (isNaN(existingCheckIn.getTime()) || isNaN(existingCheckOut.getTime())) {
+                              return false;
+                            }
+                            
+                            return day >= existingCheckIn && day <= existingCheckOut;
+                          });
+                          
+                          if (isCheckOutDateConflict) {
+                            alert('선택하신 체크아웃 날짜는 이미 예약된 기간입니다.');
+                            return;
+                          }
+                          
+                          setSelectedDate({
+                            ...selectedDate,
+                            checkOut: clickedDate
+                          });
+                        }
+                      }}
+                      disabled={(date) => {
+                        if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+                          return true;
+                        }
+                        
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        
+                        // 오늘 이전 날짜 비활성화
+                        if (date < today) {
+                          return true;
+                        }
+                        
+                        // 예약된 날짜 비활성화
+                        const bookedDates = getBookedDates();
+                        return bookedDates.some(bookedDate => 
+                          format(bookedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+                        );
+                      }}
+                      locale={ko}
+                      fromDate={new Date()}
+                      toDate={addDays(new Date(), 365)}
+                      showOutsideDays={false}
+                      className="w-full"
+                      modifiers={{
+                        booked: getBookedDates(),
+                        today: new Date(),
+                        selected: selectedDate.checkIn ? new Date(selectedDate.checkIn) : undefined,
+                        rangeStart: selectedDate.checkIn ? new Date(selectedDate.checkIn) : undefined,
+                        rangeEnd: selectedDate.checkOut ? new Date(selectedDate.checkOut) : undefined,
+                        rangeMiddle: (() => {
+                          if (!selectedDate.checkIn || !selectedDate.checkOut) return [];
+                          
+                          const checkIn = new Date(selectedDate.checkIn);
+                          const checkOut = new Date(selectedDate.checkOut);
+                          
+                          if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) return [];
+                          
+                          const middleDates = [];
+                          const current = new Date(checkIn);
+                          current.setDate(current.getDate() + 1); // 체크인 다음날부터
+                          
+                          while (current < checkOut) {
+                            middleDates.push(new Date(current));
+                            current.setDate(current.getDate() + 1);
+                          }
+                          
+                          return middleDates;
+                        })()
+                      }}
+                      modifiersStyles={{
+                        booked: { backgroundColor: '#fecaca', color: '#dc2626' },
+                        today: { border: '2px solid #1e40af', color: '#1e40af' },
+                        selected: { backgroundColor: '#3b82f6', color: 'white' },
+                        rangeStart: { backgroundColor: '#3b82f6', color: 'white' },
+                        rangeEnd: { backgroundColor: '#3b82f6', color: 'white' },
+                        rangeMiddle: { backgroundColor: '#dbeafe', color: '#1e293b' }
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 투숙객 수 선택 */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">투숙객 수</label>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => setSelectedDate(prev => ({ ...prev, guests: Math.max(1, prev.guests - 1) }))}
+                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
+                  >
+                    -
+                  </button>
+                  <span className="text-lg font-medium text-gray-900 min-w-[2rem] text-center">{selectedDate.guests}</span>
+                  <button
+                    onClick={() => setSelectedDate(prev => ({ ...prev, guests: Math.min(room.capacity, prev.guests + 1) }))}
+                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
+                  >
+                    +
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">최대 {room.capacity}명까지 가능</p>
+              </div>
+
+              {/* 예약 요약 */}
+              {selectedDate.checkIn && selectedDate.checkOut && (
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">예약 요약</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">체크인</span>
+                      <span className="font-medium">{selectedDate.checkIn}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">체크아웃</span>
+                      <span className="font-medium">{selectedDate.checkOut}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">투숙객</span>
+                      <span className="font-medium">{selectedDate.guests}명</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">박수</span>
+                      <span className="font-medium">{calculateNights()}박</span>
+                    </div>
+                    <div className="border-t border-gray-200 pt-2 mt-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">총 금액</span>
+                        <span className="font-bold text-lg text-blue-600">₩{calculateTotalPrice().toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 예약 버튼 */}
               <button
                 onClick={handleBooking}
-                className="w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white py-3 px-6 rounded-xl hover:from-blue-700 hover:to-teal-700 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
+                disabled={!selectedDate.checkIn || !selectedDate.checkOut}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 예약하기
               </button>
-
-              {/* 연락처 정보 */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h4 className="font-medium text-gray-900 mb-3">문의하기</h4>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center space-x-2">
-                    <Phone className="w-4 h-4" />
-                    <span>+63 32 888 1234</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Mail className="w-4 h-4" />
-                    <span>info@cebuparadise.com</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="w-4 h-4" />
-                    <span>24시간 문의 가능</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 리조트 정보 */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mt-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">리조트 정보</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <MapPin className="w-6 h-6 text-blue-600" />
-              </div>
-              <h4 className="font-medium text-gray-900 mb-2">위치</h4>
-              <p className="text-gray-600 text-sm">Mactan Island, Cebu, Philippines</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <WavesIcon className="w-6 h-6 text-green-600" />
-              </div>
-              <h4 className="font-medium text-gray-900 mb-2">해변 접근</h4>
-              <p className="text-gray-600 text-sm">프라이빗 해변 5분 거리</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Car className="w-6 h-6 text-purple-600" />
-              </div>
-              <h4 className="font-medium text-gray-900 mb-2">교통</h4>
-              <p className="text-gray-600 text-sm">공항에서 30분 거리</p>
             </div>
           </div>
         </div>
@@ -783,45 +951,9 @@ const RoomDetail = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">예약 정보 입력</h3>
-                <button
-                  onClick={() => setShowBookingForm(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">예약 정보 입력</h2>
               
               <form onSubmit={handleBookingSubmit} className="space-y-4">
-                {/* 예약 요약 정보 */}
-                <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                  <h4 className="font-medium text-gray-900 mb-2">예약 요약</h4>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <div className="flex justify-between">
-                      <span>객실:</span>
-                      <span className="font-medium">{room.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>체크인:</span>
-                      <span className="font-medium">{selectedDate.checkIn}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>체크아웃:</span>
-                      <span className="font-medium">{selectedDate.checkOut}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>투숙객:</span>
-                      <span className="font-medium">{selectedDate.guests}명</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>총 가격:</span>
-                      <span className="font-medium text-blue-600">₩{calculateTotalPrice().toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 예약자 정보 입력 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     예약자 이름 *
@@ -829,14 +961,12 @@ const RoomDetail = () => {
                   <input
                     type="text"
                     value={bookingForm.guestName}
-                    onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})}
+                    onChange={(e) => setBookingForm(prev => ({ ...prev, guestName: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="예약자 이름을 입력하세요"
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-1">로그인된 사용자 정보가 자동으로 입력되었습니다.</p>
                 </div>
-
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     이메일 *
@@ -844,14 +974,12 @@ const RoomDetail = () => {
                   <input
                     type="email"
                     value={bookingForm.guestEmail}
-                    onChange={(e) => setBookingForm({...bookingForm, guestEmail: e.target.value})}
+                    onChange={(e) => setBookingForm(prev => ({ ...prev, guestEmail: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="example@email.com"
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-1">로그인된 사용자 정보가 자동으로 입력되었습니다.</p>
                 </div>
-
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     전화번호 *
@@ -859,48 +987,40 @@ const RoomDetail = () => {
                   <input
                     type="tel"
                     value={bookingForm.guestPhone}
-                    onChange={(e) => setBookingForm({...bookingForm, guestPhone: e.target.value})}
+                    onChange={(e) => setBookingForm(prev => ({ ...prev, guestPhone: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="010-1234-5678"
                     required
                   />
                 </div>
-
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     특별 요청사항
                   </label>
                   <textarea
                     value={bookingForm.specialRequests}
-                    onChange={(e) => setBookingForm({...bookingForm, specialRequests: e.target.value})}
+                    onChange={(e) => setBookingForm(prev => ({ ...prev, specialRequests: e.target.value }))}
+                    rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="특별 요청사항이 있으시면 입력해주세요"
-                    rows="3"
+                    placeholder="특별한 요청사항이 있으시면 입력해주세요."
                   />
                 </div>
-
-                {/* 버튼 */}
+                
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="button"
                     onClick={() => setShowBookingForm(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                   >
                     취소
                   </button>
                   <button
                     type="submit"
                     disabled={bookingLoading}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-teal-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
-                    {bookingLoading ? (
-                      <div className="flex items-center justify-center space-x-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>예약 중...</span>
-                      </div>
-                    ) : (
-                      '예약 완료'
-                    )}
+                    {bookingLoading ? '예약 중...' : '예약 완료'}
                   </button>
                 </div>
               </form>
