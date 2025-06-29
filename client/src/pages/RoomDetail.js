@@ -259,6 +259,75 @@ const calendarStyles = `
       min-width: auto;
     }
   }
+
+  /* 모바일 최적화를 위한 추가 스타일 */
+  @media (max-width: 767px) {
+    .rdp {
+      --rdp-cell-size: 28px;
+      margin: 0.25em;
+      font-size: 12px;
+      width: 100%;
+      max-width: 100%;
+    }
+    
+    .rdp-table {
+      width: 100%;
+      min-width: 100%;
+      max-width: 100%;
+      table-layout: fixed;
+    }
+    
+    .rdp-head_cell {
+      padding: 2px 0;
+      font-size: 11px;
+      width: 14.28%;
+    }
+    
+    .rdp-nav_button {
+      padding: 4px;
+      font-size: 11px;
+    }
+    
+    .rdp-caption {
+      padding: 2px 0;
+      font-size: 13px;
+    }
+    
+    .calendar-container {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100%;
+    }
+    
+    /* 모바일에서 달력 전체 너비 조정 */
+    .rdp {
+      width: 100%;
+      max-width: 100%;
+    }
+    
+    /* 모바일에서 셀 크기 조정 */
+    .rdp-day {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+      max-width: 14.28%;
+    }
+    
+    /* 모바일에서 예약 섹션 패딩 조정 */
+    .booking-section {
+      padding: 1rem;
+    }
+    
+    /* 모바일에서 달력 셀 간격 조정 */
+    .rdp-tbody {
+      width: 100%;
+    }
+    
+    .rdp-tbody td {
+      width: 14.28%;
+      padding: 1px;
+    }
+  }
 `;
 
 const RoomDetail = () => {
@@ -797,7 +866,7 @@ const RoomDetail = () => {
 
           {/* 예약 섹션 */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
+            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8 booking-section">
               <h2 className="text-xl font-bold text-gray-900 mb-6">예약하기</h2>
               
               {/* 날짜 선택 */}
@@ -808,7 +877,7 @@ const RoomDetail = () => {
                     <p className="text-sm text-gray-500">예약 현황을 불러오는 중...</p>
                   </div>
                 ) : (
-                  <div className="calendar-container bg-white rounded-lg p-2 md:p-4 shadow-sm border border-gray-200">
+                  <div className="calendar-container bg-white rounded-lg p-1 md:p-4 shadow-sm border border-gray-200">
                     <DayPicker
                       mode="single"
                       selected={selectedDate.checkIn ? new Date(selectedDate.checkIn) : undefined}
