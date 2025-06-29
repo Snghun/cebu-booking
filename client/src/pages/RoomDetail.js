@@ -19,23 +19,40 @@ import 'react-day-picker/dist/style.css';
 // 달력 스타일 오버라이드
 const calendarStyles = `
   .rdp {
-    --rdp-cell-size: 40px;
+    --rdp-cell-size: 32px;
     --rdp-accent-color: #1e40af;
     --rdp-background-color: #dbeafe;
     --rdp-accent-color-dark: #1e3a8a;
     --rdp-background-color-dark: #1e3a8a;
     --rdp-outline: 2px solid var(--rdp-accent-color);
     --rdp-outline-selected: 2px solid rgba(0, 0, 0, 0.75);
-    margin: 1em;
+    margin: 0.5em;
+    font-size: 14px;
+  }
+  
+  @media (min-width: 768px) {
+    .rdp {
+      --rdp-cell-size: 40px;
+      margin: 1em;
+      font-size: 16px;
+    }
   }
   
   .rdp-day_selected,
+  .rdp-day_selected:focus-visible,
+  .rdp-day_selected:hover {
+    color: white;
+    background-color: #3b82f6;
+    border-radius: 6px;
+    font-weight: 400;
+  }
+  
   .rdp-day_range_start,
   .rdp-day_range_end {
-    background-color: #3b82f6 !important;
-    color: white !important;
-    font-weight: 400 !important;
-    border-radius: 6px !important;
+    color: white;
+    background-color: #3b82f6;
+    border-radius: 6px;
+    font-weight: 400;
   }
   
   .rdp-day_range_middle {
@@ -61,10 +78,17 @@ const calendarStyles = `
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 4px;
-    height: 4px;
+    width: 3px;
+    height: 3px;
     background-color: #dc2626;
     border-radius: 50%;
+  }
+  
+  @media (min-width: 768px) {
+    .rdp-day_booked::after {
+      width: 4px;
+      height: 4px;
+    }
   }
   
   .rdp-day_today {
@@ -88,7 +112,15 @@ const calendarStyles = `
   .rdp-head_cell {
     font-weight: 600;
     color: #374151;
-    padding: 8px 0;
+    padding: 4px 0;
+    font-size: 12px;
+  }
+  
+  @media (min-width: 768px) {
+    .rdp-head_cell {
+      padding: 8px 0;
+      font-size: 14px;
+    }
   }
   
   .rdp-nav_button {
@@ -96,8 +128,16 @@ const calendarStyles = `
     border: 1px solid #d1d5db;
     border-radius: 6px;
     color: #374151;
-    padding: 8px;
+    padding: 6px;
     transition: all 0.2s;
+    font-size: 12px;
+  }
+  
+  @media (min-width: 768px) {
+    .rdp-nav_button {
+      padding: 8px;
+      font-size: 14px;
+    }
   }
   
   .rdp-nav_button:hover {
@@ -108,7 +148,15 @@ const calendarStyles = `
   .rdp-caption {
     font-weight: 600;
     color: #111827;
-    padding: 8px 0;
+    padding: 4px 0;
+    font-size: 14px;
+  }
+  
+  @media (min-width: 768px) {
+    .rdp-caption {
+      padding: 8px 0;
+      font-size: 16px;
+    }
   }
   
   /* 선택된 구간 음영 처리 */
@@ -193,6 +241,23 @@ const calendarStyles = `
   .rdp-day_range_start .rdp-day_button,
   .rdp-day_range_end .rdp-day_button {
     border: none !important;
+  }
+  
+  /* 모바일 달력 컨테이너 */
+  .calendar-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* 모바일에서 달력 테이블 최소 너비 설정 */
+  .rdp-table {
+    min-width: 280px;
+  }
+  
+  @media (min-width: 768px) {
+    .rdp-table {
+      min-width: auto;
+    }
   }
 `;
 
@@ -743,7 +808,7 @@ const RoomDetail = () => {
                     <p className="text-sm text-gray-500">예약 현황을 불러오는 중...</p>
                   </div>
                 ) : (
-                  <div className="calendar-container bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <div className="calendar-container bg-white rounded-lg p-2 md:p-4 shadow-sm border border-gray-200">
                     <DayPicker
                       mode="single"
                       selected={selectedDate.checkIn ? new Date(selectedDate.checkIn) : undefined}
