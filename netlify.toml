@@ -1,6 +1,6 @@
 [build]
-  # React 앱 빌드 명령어
-  command = "npm install && cd client && npm install && npm run build"
+  # React 앱 빌드 명령어 (Functions 의존성 설치 포함)
+  command = "npm install && cd netlify/functions && npm install && cd ../.. && cd client && npm install && npm run build"
   
   # 빌드 결과물 디렉토리
   publish = "client/build"
@@ -11,6 +11,10 @@
 [build.environment]
   # Node.js 버전
   NODE_VERSION = "18"
+
+# Functions 의존성 설치 플러그인
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
 
 # 리다이렉트 설정 (SPA 라우팅 지원)
 [[redirects]]
