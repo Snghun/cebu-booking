@@ -390,7 +390,7 @@ const generateTempPassword = () => {
 const sendEmail = async (to, subject, html) => {
   try {
     // Gmail SMTP 설정 (환경변수에서 가져오기)
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
