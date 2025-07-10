@@ -106,9 +106,9 @@ const CebuResortBooking = () => {
   // 리조트 시설들
   const facilities = [
     { icon: <Waves className="w-8 h-8" />, name: '인피니티 풀', desc: '바다와 하나되는 풀' },
-    { icon: <Coffee className="w-8 h-8" />, name: '루프탑 레스토랑', desc: '세부 최고의 요리' },
-    { icon: <Car className="w-8 h-8" />, name: '공항 픽업', desc: '무료 픽업 서비스' },
-    { icon: <Wifi className="w-8 h-8" />, name: '프리미엄 스파', desc: '전통 필리핀 마사지' }
+    { icon: <Coffee className="w-8 h-8" />, name: '뉴타운 인프라', desc: '깨끗하고 편리한 시설' },
+    { icon: <Car className="w-8 h-8" />, name: '가까운 공항', desc: '세부 국제 공항 15분 거리' },
+    { icon: <Wifi className="w-8 h-8" />, name: '와이파이', desc: '객실 내 무료 와이파이' }
   ];
 
   // 히어로 이미지 자동 슬라이드
