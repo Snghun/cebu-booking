@@ -782,19 +782,20 @@ const CebuResortBooking = () => {
             <div>
               <h5 className="text-xl font-bold mb-6">연락처</h5>
               <div className="space-y-3 text-gray-400">
-                <p>📍 Mactan Island, Cebu, Philippines</p>
-                <p>📞 +63 32 888 1234</p>
-                <p>✉️ info@cebuparadise.com</p>
+                <p>📍 Newtown 8blvd, Mactan Lapu-Lapu, Cebu, Philippines</p>
+                <p>📞 +63 956 570 7440</p>
+                <p>✉️ bamibomi@naver.com</p>
               </div>
             </div>
             
             <div>
               <h5 className="text-xl font-bold mb-6">체크인 정보</h5>
               <div className="space-y-3 text-gray-400">
-                <p>체크인: 오후 3시</p>
+                <p>체크인: 오후 1시</p>
                 <p>체크아웃: 오전 11시</p>
-                <p>24시간 컨시어지 서비스</p>
-                <p>무료 공항 픽업 서비스</p>
+                <p>24시간 체크인 서비스</p>
+                <p>갤런 물 1통 서비스</p>
+                <p>아떼,시터,튜터 소개 가능 (일정 맞을 경우)</p>
               </div>
             </div>
           </div>
