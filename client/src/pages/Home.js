@@ -782,9 +782,10 @@ const CebuResortBooking = () => {
             <div>
               <h5 className="text-xl font-bold mb-6">연락처</h5>
               <div className="space-y-3 text-gray-400">
-                <p>📍 Newtown 8blvd, Mactan Lapu-Lapu, Cebu, Philippines</p>
+                <p>📍 Newtown 8blvd, Mactan Lapu-Lapu, Cebu</p>
                 <p>📞 +63 956 570 7440</p>
                 <p>✉️ bamibomi@naver.com</p>
+                <p>💬 카카오톡: bamibomi</p>
               </div>
             </div>
             
