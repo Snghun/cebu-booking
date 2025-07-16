@@ -526,7 +526,7 @@ const CebuResortBooking = () => {
           <h3 className="text-3xl font-bold text-center mb-12 text-gray-800">객실 예약</h3>
           
           {/* 예약 폼 */}
-          <div className="bg-gradient-to-r from-emerald-50 via-cyan-50 to-teal-50 rounded-2xl p-4 sm:p-8 mb-12">
+          <div className="bg-gradient-to-r from-emerald-50 via-cyan-50 to-teal-50 rounded-2xl p-4 sm:p-8 mb-12 hidden md:block">
             {/* 선택된 객실 정보 표시 */}
             {!selectedRoom && (
               <div className="mb-6 p-4 bg-white rounded-xl shadow-sm border-l-4 border-gray-300 text-gray-600 text-center">

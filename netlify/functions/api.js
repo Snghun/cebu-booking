@@ -1429,10 +1429,22 @@ async function handleAdmin(httpMethod, pathSegments, body, headers, event) {
         .populate('user', 'username email')
         .sort({ createdAt: -1 });
       
+      // guestInfo 객체로 변환
+      const bookingsWithGuestInfo = bookings.map(booking => {
+        const bookingObj = booking.toObject();
+        bookingObj.guestInfo = {
+          guestName: bookingObj.guestName,
+          guestEmail: bookingObj.guestEmail,
+          guestPhone: bookingObj.guestPhone,
+          specialRequests: bookingObj.specialRequests
+        };
+        return bookingObj;
+      });
+      
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify(bookings)
+        body: JSON.stringify(bookingsWithGuestInfo)
       };
     } else if (httpMethod === 'GET' && pathSegments[1] === 'bookings' && pathSegments[2]) {
       // GET /api/admin/bookings/:id - 예약 상세
@@ -1448,10 +1460,19 @@ async function handleAdmin(httpMethod, pathSegments, body, headers, event) {
         };
       }
       
+      // guestInfo 객체로 변환
+      const bookingObj = booking.toObject();
+      bookingObj.guestInfo = {
+        guestName: bookingObj.guestName,
+        guestEmail: bookingObj.guestEmail,
+        guestPhone: bookingObj.guestPhone,
+        specialRequests: bookingObj.specialRequests
+      };
+      
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify(booking)
+        body: JSON.stringify(bookingObj)
       };
     } else if (httpMethod === 'PUT' && pathSegments[1] === 'bookings' && pathSegments[2]) {
       // PUT /api/admin/bookings/:id - 예약 수정
